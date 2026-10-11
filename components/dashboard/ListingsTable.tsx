@@ -91,7 +91,7 @@ export function ListingsTable({
                   </Link>
                 </td>
                 <td className="px-4 py-3">
-                  <CategoryBadge category={p.category} />
+                  <CategoryBadge category={p.category} propertyType={p.propertyType} />
                 </td>
                 <td className="px-4 py-3">
                   <ListingTypeBadge listingType={p.listingType} size="sm" />
@@ -116,7 +116,7 @@ export function ListingsTable({
                   </select>
                 </td>
                 <td className="px-4 py-3 font-medium text-ink-700">
-                  {formatPriceWithPeriod(p.price, p.listingType, p.rentalPeriod, t)}
+                  {formatPriceWithPeriod(p.price, p.listingType, p.rentalPeriod, t, locale)}
                 </td>
                 <td className="px-4 py-3 text-ink-500">{formatLocation(p.location, t)}</td>
                 <td className="px-4 py-3 text-ink-400">{formatDate(p.updatedAt, locale)}</td>

@@ -1,6 +1,7 @@
 import type { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+import { normalizePhone } from "@/lib/auth/phone";
 import { connectToDatabase } from "@/lib/mongodb/connect";
 import { User } from "@/models/User";
 import type { UserRole } from "@/types/user";
@@ -20,10 +21,14 @@ export const authOptions: AuthOptions = {
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
+        identifier: { label: "Email or phone number", type: "text" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        const identifier = (credentials?.identifier || credentials?.email || "").trim();
+        if (!identifier || !credentials?.password) return null;
+        const phone = normalizePhone(identifier);
+        if (!identifier.includes("@") && !phone) return null;
 
         try {
           await connectToDatabase();
@@ -44,7 +49,7 @@ export const authOptions: AuthOptions = {
           throw new Error("Could not reach the database. Please try again shortly.");
         }
 
-        const user = await User.findOne({ email: credentials.email.toLowerCase().trim() });
+        const user = await User.findOne(identifier.includes("@") ? { email: identifier.toLowerCase() } : { phone });
         if (!user || !user.active) return null;
 
         const valid = await bcrypt.compare(credentials.password, user.passwordHash);

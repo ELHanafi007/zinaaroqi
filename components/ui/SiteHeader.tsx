@@ -15,8 +15,8 @@ export function SiteHeader({ onMenuClick }: { onMenuClick?: () => void }) {
 	const canAddListing = Boolean(session?.user.role && LISTINGS_ROLES.includes(session.user.role));
 
 	return (
-		<header className="sticky top-0 z-30 border-b border-ink-100 bg-stone-50/90 backdrop-blur">
-			<div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+		<header className="sage-site-header sticky top-0 z-30 border-b backdrop-blur">
+			<div className="mx-auto flex h-20 max-w-[1320px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
 				<div className="flex items-center gap-2">
 					<button
 						type="button"
@@ -30,12 +30,13 @@ export function SiteHeader({ onMenuClick }: { onMenuClick?: () => void }) {
 						</svg>
 					</button>
 					<Link href="/" className="flex items-center gap-2.5">
-						<span className="flex h-[65px] w-[65px] items-center justify-center font-display text-sm font-semibold text-ink-800">
-							<Image src={logo} alt="logo" />
+						<span className="flex h-11 w-11 items-center justify-center font-display text-sm font-semibold text-ink-800">
+							<Image src={logo} alt="" />
 						</span>
-						<span className="font-display text-xl font-semibold tracking-tight text-ink-800">{t("nav.brand")}</span>
+						<span className="font-display text-lg font-semibold sm:text-xl tracking-tight text-ink-800">{t("nav.brand")}</span>
 					</Link>
 				</div>
+
 
 				<div className="flex items-center gap-2">
 					{canAddListing && (
@@ -47,7 +48,7 @@ export function SiteHeader({ onMenuClick }: { onMenuClick?: () => void }) {
 						type="button"
 						onClick={() => setLocale(locale === "en" ? "ar" : "en")}
 						className="rounded-md border border-ink-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-ink-600 transition hover:border-ink-400 hover:bg-stone-50"
-						aria-label="Toggle language"
+						aria-label={locale === "en" ? "Switch to Arabic" : "التبديل إلى الإنجليزية"}
 					>
 						{locale === "en" ? "العربية" : "English"}
 					</button>

@@ -1,8 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { propertyLocationUrl, propertyShareMessage } from "@/lib/property-share";
+import { publicSiteOrigin } from "@/lib/site-url";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { CopyButton } from "@/components/ui/CopyButton";
+import { Icon } from "@/components/ui/Icon";
+import { PriceDisplay } from "@/components/properties/PriceDisplay";
+import { WhatsAppSendForm } from "@/components/properties/WhatsAppSendForm";
+import { TikTokVideo } from "@/components/properties/TikTokVideo";
+import { LocationMap } from "@/components/properties/LocationMap";
 import { CategoryBadge } from "@/components/properties/CategoryBadge";
 import { ListingTypeBadge } from "@/components/properties/ListingTypeBadge";
 import { StatusBadge } from "@/components/properties/StatusBadge";
@@ -10,20 +18,22 @@ import { ResidencyBadge } from "@/components/properties/ResidencyBadge";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { fetchProperty, deleteProperty, ApiClientError } from "@/lib/api-client";
-import { formatDate, formatLocation, formatPriceWithPeriod } from "@/lib/format";
+import { formatDate, formatLocation } from "@/lib/format";
 import type { PropertyDTO } from "@/types/property";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { useSession } from "next-auth/react";
 import { OFFICE_PHONE_NUMBERS, officeWhatsAppLink, officeCallLink } from "@/lib/config/office";
 
-export default function PropertyDetailsClient() {
+export default function PropertyDetailsClient({ publicOrigin }: { publicOrigin: string | null }) {
   const { t, locale } = useLanguage();
   const { data: session } = useSession();
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const galleryDialog = useRef<HTMLDialogElement>(null);
   const [property, setProperty] = useState<PropertyDTO | null>(null);
   const [status, setStatus] = useState<"loading" | "error" | "notfound" | "ready">("loading");
   const [activeImage, setActiveImage] = useState(0);
+  const [officeSendOpen, setOfficeSendOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -33,6 +43,7 @@ export default function PropertyDetailsClient() {
       const res = await fetchProperty(params.id);
       setProperty(res.data);
       setActiveImage(0);
+      setOfficeSendOpen(false);
       setStatus("ready");
     } catch (err) {
       if (err instanceof ApiClientError && err.status === 404) {
@@ -64,7 +75,7 @@ export default function PropertyDetailsClient() {
     return (
       <div className="mx-auto max-w-5xl animate-pulse px-4 py-10 sm:px-6 lg:px-8">
         <div className="mb-6 h-8 w-2/3 rounded bg-stone-200" />
-        <div className="aspect-video w-full rounded-lg bg-stone-200" />
+        <div className="aspect-video w-full rounded-2xl bg-stone-200" />
       </div>
     );
   }
@@ -88,31 +99,77 @@ export default function PropertyDetailsClient() {
   }
 
   const images = property.images.length > 0 ? property.images : [];
-  const propertyUrl = typeof window !== "undefined" ? window.location.href : "";
+  const shareOrigin = publicOrigin || (typeof window !== "undefined" ? publicSiteOrigin(window.location.origin) : null);
+  const propertyUrl = shareOrigin ? `${shareOrigin}/properties/${property._id}` : "";
+  const locationUrl = propertyLocationUrl(property);
+  const shareMessage = propertyShareMessage(property.title, propertyUrl, locationUrl, t("form.locationSection"));
   const details = property.details;
   const hasAnyDetail =
     details &&
-    (details.rooms != null ||
+    (details.acInstalled != null ||
+      details.rooms != null ||
       details.bathrooms != null ||
       details.hasKitchen != null ||
       details.kitchenCabinetsInstalled != null ||
       details.residencyType != null);
   const units = property.units ?? [];
+  const canSendFromOffice = Boolean(session?.user && ["admin", "real_estate_officer", "project_manager"].includes(session.user.role) &&
+    (session.user.role !== "project_manager" || property.category === "build") && property.visibility === "public");
 
   function yesNo(value?: boolean) {
     return value ? t("property.hasKitchenYes") : t("property.hasKitchenNo");
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+    <div className="property-editorial mx-auto max-w-7xl px-4 py-8 sm:px-8 lg:px-10">
       <Link href="/" className="text-sm font-medium text-ink-400 hover:text-ink-700">
         {locale === "ar" ? "→" : "←"} {t("property.backToListings")}
       </Link>
 
-      <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
+      <div className="editorial-hero">
         <div>
-          <div className="flex items-center gap-2">
-            <CategoryBadge category={property.category} />
+      {images.length > 0 ? (
+        <div className="editorial-gallery">
+          <div className="editorial-image-stage">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={images[activeImage]}
+              alt={property.title}
+              className="h-full max-h-[70vh] w-full object-contain"
+            />
+          </div>
+          <button type="button" className="btn-secondary mt-3 w-full sm:w-auto" onClick={() => galleryDialog.current?.showModal()}>
+            <Icon name="image" className="h-4 w-4" />{t("property.viewFullImage")} <span className="text-ink-400">{activeImage + 1} / {images.length}</span>
+          </button>
+          {images.length > 1 && (
+            <div className="mt-3 flex gap-2 overflow-x-auto">
+              {images.map((img, idx) => (
+                <button
+                  key={img + idx}
+                  onClick={() => setActiveImage(idx)}
+                  aria-label={`${property.title} — ${idx + 1} / ${images.length}`}
+                  aria-pressed={idx === activeImage}
+                  className={`h-16 w-24 flex-shrink-0 overflow-hidden rounded-md border-2 ${
+                    idx === activeImage ? "border-ink-800" : "border-transparent"
+                  }`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={img} alt="" className="h-full w-full bg-stone-200 object-contain" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="editorial-image-stage text-ink-300">
+          <span className="font-display italic">{t("property.noImages")}</span>
+        </div>
+      )}
+</div>
+        <div className="editorial-summary">      <div className="editorial-heading">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <CategoryBadge category={property.category} propertyType={property.propertyType} />
             <ListingTypeBadge listingType={property.listingType} />
             <StatusBadge status={property.status} />
             {session?.user && property.details?.residencyType && (
@@ -124,74 +181,116 @@ export default function PropertyDetailsClient() {
               </span>
             )}
           </div>
-          <h1 className="mt-3 font-display text-3xl font-semibold text-ink-800">
+          <h1 className="editorial-title">
             {property.title}
           </h1>
-          <p className="mt-1 text-ink-400">{formatLocation(property.location, t)}</p>
+          <p className="mt-3 flex items-center gap-2 text-sm text-ink-500"><Icon name="location" className="h-4 w-4" />{locationUrl && !property.location?.city && !property.location?.district ? t("form.locationSection") : formatLocation(property.location, t)}</p>
         </div>
-        {session?.user && (
-          <div className="flex gap-2">
-            <Link href={`/dashboard/${property._id}/edit`} className="btn-secondary">
-              {t("common.edit")}
-            </Link>
-            {session.user.role === "admin" && (
-              <button className="btn-danger" onClick={() => setConfirmOpen(true)}>
-                {t("common.delete")}
-              </button>
-            )}
-          </div>
-        )}
+        <div className="mt-6 flex flex-wrap gap-2" role="group" aria-label={t("property.actions")}>
+          {locationUrl && <a href={locationUrl} target="_blank" rel="noopener noreferrer" className="property-icon-action" data-tooltip={t("property.openLocation")} aria-label={t("property.openLocation")}><Icon name="location" /></a>}
+          {propertyUrl ? <a href={`https://wa.me/?text=${encodeURIComponent(shareMessage)}`} target="_blank" rel="noopener noreferrer" className="property-icon-action" data-tooltip={t("property.shareWhatsApp")} aria-label={t("property.shareWhatsApp")}><Icon name="share" /></a> :
+            <button type="button" className="property-icon-action" disabled data-tooltip={t("property.shareNeedsPublicUrl")} aria-label={t("property.shareWhatsApp")}><Icon name="share" /></button>}
+          {property.tiktokUrl && <a href={property.tiktokUrl} target="_blank" rel="noopener noreferrer" className="property-icon-action" data-tooltip={t("property.watchOnTikTok")} aria-label={t("property.watchOnTikTok")}><Icon name="tiktok" /></a>}
+          {canSendFromOffice && <button type="button" className="property-icon-action property-icon-whatsapp" data-tooltip={t("property.sendViaOffice")} aria-label={t("property.sendViaOffice")} aria-expanded={officeSendOpen} aria-controls="whatsapp-send-panel" onClick={() => setOfficeSendOpen(!officeSendOpen)}><Icon name="whatsapp" /></button>}
+          {session?.user && <>
+            <Link href={`/dashboard/${property._id}/edit`} className="property-icon-action" data-tooltip={t("common.edit")} aria-label={t("common.edit")}><Icon name="edit" /></Link>
+            {session.user.role === "admin" && <button type="button" className="property-icon-action property-icon-delete" data-tooltip={t("common.delete")} aria-label={t("common.delete")} onClick={() => setConfirmOpen(true)}><Icon name="trash" /></button>}
+          </>}
+        </div>
       </div>
 
-      {images.length > 0 ? (
-        <div className="mt-6">
-          <div className="aspect-video w-full overflow-hidden rounded-lg bg-stone-200">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={images[activeImage]}
-              alt={property.title}
-              className="h-full w-full object-cover"
-            />
+          <dl className="editorial-facts">
+            <div><dt><Icon name={property.category === "build" ? "building" : property.category === "land" ? "land" : "home"} className="h-5 w-5" />{property.category === "apartment" ? t("offer.propertyType") : t("property.category")}</dt><dd>{property.propertyType ? t(`offer.types.${property.propertyType}`) : t(`badges.category.${property.category}`)}</dd></div>
+            <div><dt><Icon name="check" className="h-5 w-5" />{t("property.availability")}</dt><dd>{t(`badges.status.${property.status}`)}</dd></div>
+            {property.category !== "land" && details?.rooms != null && <div><dt><Icon name="bed" className="h-5 w-5" />{t("property.rooms")}</dt><dd>{details.rooms}</dd></div>}
+            {property.category !== "land" && details?.bathrooms != null && <div><dt><Icon name="bath" className="h-5 w-5" />{t("property.bathrooms")}</dt><dd>{details.bathrooms}</dd></div>}
+            {property.category === "build" && units.length > 0 && <div><dt><Icon name="building" className="h-5 w-5" />{t("property.unitsSection")}</dt><dd>{units.length}</dd></div>}
+          </dl>
+
+        <aside className="editorial-contact">
+          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-ink-500"><Icon name="money" className="h-4 w-4 text-moss-500" />{t("property.price")}</p>
+          <div className="mt-3"><PriceDisplay price={property.price} listingType={property.listingType} rentalPeriod={property.rentalPeriod} large /></div>
+
+          <div className="mt-5 border-t border-ink-100 pt-5">
+            {session?.user ? (
+              <>
+                <div className="flex items-center justify-between gap-3"><p className="text-xs font-semibold uppercase tracking-wide text-ink-400">{t("property.ownerContact")}</p>{property.owner && <CopyButton label={t("property.copyOwner")} text={[property.owner.name, property.owner.phone, property.owner.email, property.owner.notes].filter(Boolean).join("\n")} />}</div>
+                {property.owner ? (
+                  <>
+                    <p className="mt-2 font-medium text-ink-800">{property.owner.name}</p>
+                    <p className="mt-1 text-sm text-ink-600">{property.owner.phone}</p>
+                    {property.owner.email && (
+                      <p className="mt-1 text-sm text-ink-600">{property.owner.email}</p>
+                    )}
+                    {property.owner.notes && (
+                      <p className="mt-2 text-sm text-ink-400">{property.owner.notes}</p>
+                    )}
+                  </>
+                ) : (
+                  <p className="mt-2 text-sm text-ink-400">{t("property.ownerNotProvided")}</p>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">
+                  {t("property.contactOffice")}
+                </p>
+                <p className="mt-1 text-xs text-ink-400">{t("property.contactOfficeHint")}</p>
+                <div className="mt-3 space-y-2">
+                  {OFFICE_PHONE_NUMBERS.map((number) => (
+                    <div key={number} className="flex items-center justify-between gap-2">
+                      <span className="text-sm text-ink-700" dir="ltr">
+                        {number}
+                      </span>
+                      <div className="flex gap-2">
+                        <a
+                          href={officeWhatsAppLink(number, shareMessage)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn-secondary px-3 py-1.5 text-xs"
+                        >
+                          <Icon name="phone" className="h-3.5 w-3.5" />{t("property.whatsapp")}
+                        </a>
+                        <a href={officeCallLink(number)} className="btn-secondary px-3 py-1.5 text-xs">
+                          <Icon name="phone" className="h-3.5 w-3.5" />{t("property.call")}
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
-          {images.length > 1 && (
-            <div className="mt-3 flex gap-2 overflow-x-auto">
-              {images.map((img, idx) => (
-                <button
-                  key={img + idx}
-                  onClick={() => setActiveImage(idx)}
-                  className={`h-16 w-24 flex-shrink-0 overflow-hidden rounded-md border-2 ${
-                    idx === activeImage ? "border-ink-800" : "border-transparent"
-                  }`}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={img} alt="" className="h-full w-full object-cover" />
-                </button>
-              ))}
+
+
+
+          {session?.user && property.listingType === "rent" && property.tenant && (
+            <div className="mt-5 border-t border-ink-100 pt-5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">
+                {t("property.tenantSection")}
+              </p>
+              {property.tenant.name && (
+                <p className="mt-2 font-medium text-ink-800">{property.tenant.name}</p>
+              )}
+              {property.tenant.phone && (
+                <p className="mt-1 text-sm text-ink-600">{property.tenant.phone}</p>
+              )}
+              {property.tenant.idNumber && (
+                <p className="mt-1 text-sm text-ink-600">
+                  {t("property.tenantIdNumber")}: {property.tenant.idNumber}
+                </p>
+              )}
             </div>
           )}
+        </aside>
         </div>
-      ) : (
-        <div className="mt-6 flex aspect-video w-full items-center justify-center rounded-lg bg-stone-200 text-ink-300">
-          <span className="font-display italic">{t("property.noImages")}</span>
-        </div>
-      )}
+      </div>
 
-      {property.tiktokUrl && (
-        <div className="mt-4">
-          <a
-            href={property.tiktokUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-secondary inline-flex"
-          >
-            {t("property.watchOnTikTok")}
-          </a>
-        </div>
-      )}
+      {canSendFromOffice && officeSendOpen && <WhatsAppSendForm key={property._id} property={property} publicOrigin={shareOrigin || ""} onClose={() => setOfficeSendOpen(false)} />}
 
-      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <h2 className="font-display text-xl font-semibold text-ink-800">{t("property.description")}</h2>
+      <div className="editorial-lower">
+        <div className="editorial-story">
+          <div className="flex items-center justify-between gap-3"><h2 className="font-display text-xl font-semibold text-ink-800">{t("property.description")}</h2><CopyButton label={t("property.copyDescription")} text={property.description} /></div>
           <p className="mt-3 whitespace-pre-line text-ink-600">{property.description}</p>
 
           <h2 className="mt-8 font-display text-xl font-semibold text-ink-800">{t("property.details")}</h2>
@@ -200,6 +299,14 @@ export default function PropertyDetailsClient() {
               <dt className="text-xs uppercase tracking-wide text-ink-400">{t("property.category")}</dt>
               <dd className="mt-1 font-medium text-ink-800">{t(`badges.category.${property.category}`)}</dd>
             </div>
+            {property.category === "apartment" && <div>
+              <dt className="text-xs uppercase tracking-wide text-ink-400">{t("offer.propertyType")}</dt>
+              <dd className="mt-1 font-medium text-ink-800">{t(`offer.types.${property.propertyType ?? "apartment"}`)}</dd>
+            </div>}
+            {property.category === "build" && units.length > 0 && <div>
+              <dt className="text-xs uppercase tracking-wide text-ink-400">{t("property.unitsSection")}</dt>
+              <dd className="mt-1 font-medium text-ink-800">{units.length}</dd>
+            </div>}
             <div>
               <dt className="text-xs uppercase tracking-wide text-ink-400">{t("property.status")}</dt>
               <dd className="mt-1 font-medium text-ink-800">
@@ -234,6 +341,14 @@ export default function PropertyDetailsClient() {
             )}
           </dl>
 
+          {session?.user && <section className="property-office-record mt-8 rounded-xl border border-ink-100 bg-white p-5">
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-ink-800"><Icon name="users" className="h-5 w-5" />{t("property.officeRecord")}</h2>
+            <dl className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <div><dt className="text-xs uppercase tracking-wide text-ink-400">{t("offer.broughtBy")}</dt><dd className="mt-1 font-medium text-ink-800">{property.broughtBy?.name || t("property.notRecorded")}</dd></div>
+              <div><dt className="text-xs uppercase tracking-wide text-ink-400">{t("form.visibility")}</dt><dd className="mt-1 font-medium text-ink-800">{t(property.visibility === "public" ? "form.visibilityPublic" : "form.visibilityPrivate")}</dd></div>
+            </dl>
+          </section>}
+
           {hasAnyDetail && (
             <>
               <h2 className="mt-8 font-display text-xl font-semibold text-ink-800">
@@ -242,15 +357,18 @@ export default function PropertyDetailsClient() {
               <dl className="mt-3 grid grid-cols-2 gap-4 rounded-lg border border-ink-100 bg-white p-5 shadow-card sm:grid-cols-4">
                 {details?.rooms != null && (
                   <div>
-                    <dt className="text-xs uppercase tracking-wide text-ink-400">{t("property.rooms")}</dt>
+                    <dt className="text-xs uppercase tracking-wide text-ink-400"><span className="inline-flex items-center gap-1.5"><Icon name="bed" className="h-4 w-4" />{t("property.rooms")}</span></dt>
                     <dd className="mt-1 font-medium text-ink-800">{details.rooms}</dd>
                   </div>
                 )}
                 {details?.bathrooms != null && (
                   <div>
-                    <dt className="text-xs uppercase tracking-wide text-ink-400">{t("property.bathrooms")}</dt>
+                    <dt className="text-xs uppercase tracking-wide text-ink-400"><span className="inline-flex items-center gap-1.5"><Icon name="bath" className="h-4 w-4" />{t("property.bathrooms")}</span></dt>
                     <dd className="mt-1 font-medium text-ink-800">{details.bathrooms}</dd>
                   </div>
+                )}
+                {details?.acInstalled != null && (
+                  <div><dt className="text-xs uppercase tracking-wide text-ink-400"><span className="inline-flex items-center gap-1.5"><Icon name="snow" className="h-4 w-4" />{t("form.acInstalled")}</span></dt><dd className="mt-1 font-medium text-ink-800">{yesNo(details.acInstalled)}</dd></div>
                 )}
                 {details?.hasKitchen != null && (
                   <div>
@@ -290,23 +408,21 @@ export default function PropertyDetailsClient() {
                     className="rounded-lg border border-ink-100 bg-white p-5 shadow-card"
                   >
                     <p className="font-display font-semibold text-ink-800">
-                      {unit.name?.trim() || `${t("property.unit")} ${idx + 1}`}
-                      {unit.number?.trim() && (
-                        <span className="ms-2 font-body text-sm font-normal text-ink-400">
-                          #{unit.number.trim()}
-                        </span>
-                      )}
+                      {t("property.unit")} {unit.number?.trim() || unit.name?.trim() || idx + 1}
+                      <span className={`ms-3 inline-flex rounded-full px-2.5 py-1 font-body text-xs font-semibold ${unit.isRented ? "bg-brass-50 text-brass-600" : "bg-moss-50 text-moss-600"}`}>
+                        {t(unit.isRented ? "badges.status.rented" : "badges.status.available")}
+                      </span>
                     </p>
                     <dl className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
                       {unit.rooms != null && (
                         <div>
-                          <dt className="text-xs uppercase tracking-wide text-ink-400">{t("property.rooms")}</dt>
+                          <dt className="text-xs uppercase tracking-wide text-ink-400"><span className="inline-flex items-center gap-1.5"><Icon name="bed" className="h-4 w-4" />{t("property.rooms")}</span></dt>
                           <dd className="mt-1 font-medium text-ink-800">{unit.rooms}</dd>
                         </div>
                       )}
                       {unit.bathrooms != null && (
                         <div>
-                          <dt className="text-xs uppercase tracking-wide text-ink-400">{t("property.bathrooms")}</dt>
+                          <dt className="text-xs uppercase tracking-wide text-ink-400"><span className="inline-flex items-center gap-1.5"><Icon name="bath" className="h-4 w-4" />{t("property.bathrooms")}</span></dt>
                           <dd className="mt-1 font-medium text-ink-800">{unit.bathrooms}</dd>
                         </div>
                       )}
@@ -341,7 +457,7 @@ export default function PropertyDetailsClient() {
                         </div>
                       )}
                     </dl>
-                    {session?.user && property.listingType === "rent" && unit.tenant && (
+                    {session?.user && unit.isRented && unit.tenant && (
                       <div className="mt-4 border-t border-ink-100 pt-4">
                         <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">
                           {t("property.tenantSection")}
@@ -378,86 +494,23 @@ export default function PropertyDetailsClient() {
                 ))}
               </div>
             </>
-          )}
+          )}</div>
+        <div className="editorial-location">
+          {locationUrl && <div className="mb-3 flex items-center justify-between gap-3"><h2 className="editorial-section-title"><Icon name="location" className="h-5 w-5" />{t("form.locationSection")}</h2><CopyButton label={t("property.copyLocation")} text={locationUrl} /></div>}
+
+          {locationUrl && <LocationMap url={locationUrl} />}
+          {property.tiktokUrl && <div className="mt-5"><TikTokVideo url={property.tiktokUrl} /></div>}
+          {property.tiktokUrl && <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ink-100 bg-white p-4">
+            <a href={property.tiktokUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-medium text-ink-600 hover:underline"><Icon name="tiktok" className="h-5 w-5" />{t("property.watchOnTikTok")}</a>
+            <CopyButton label={t("property.copyTikTok")} text={property.tiktokUrl} />
+          </div>}
         </div>
-
-        <aside className="h-fit rounded-lg border border-ink-100 bg-white p-5 shadow-card">
-          <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">{t("property.price")}</p>
-          <p className="mt-1 font-display text-2xl font-semibold text-ink-800">
-            {formatPriceWithPeriod(property.price, property.listingType, property.rentalPeriod, t)}
-          </p>
-
-          <div className="mt-5 border-t border-ink-100 pt-5">
-            {session?.user ? (
-              <>
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">{t("property.ownerContact")}</p>
-                {property.owner ? (
-                  <>
-                    <p className="mt-2 font-medium text-ink-800">{property.owner.name}</p>
-                    <p className="mt-1 text-sm text-ink-600">{property.owner.phone}</p>
-                    {property.owner.email && (
-                      <p className="mt-1 text-sm text-ink-600">{property.owner.email}</p>
-                    )}
-                    {property.owner.notes && (
-                      <p className="mt-2 text-sm text-ink-400">{property.owner.notes}</p>
-                    )}
-                  </>
-                ) : (
-                  <p className="mt-2 text-sm text-ink-400">{t("property.ownerNotProvided")}</p>
-                )}
-              </>
-            ) : (
-              <>
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">
-                  {t("property.contactOffice")}
-                </p>
-                <p className="mt-1 text-xs text-ink-400">{t("property.contactOfficeHint")}</p>
-                <div className="mt-3 space-y-2">
-                  {OFFICE_PHONE_NUMBERS.map((number) => (
-                    <div key={number} className="flex items-center justify-between gap-2">
-                      <span className="text-sm text-ink-700" dir="ltr">
-                        {number}
-                      </span>
-                      <div className="flex gap-2">
-                        <a
-                          href={officeWhatsAppLink(number, `${property.title}\n${propertyUrl}`)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn-secondary px-3 py-1.5 text-xs"
-                        >
-                          {t("property.whatsapp")}
-                        </a>
-                        <a href={officeCallLink(number)} className="btn-secondary px-3 py-1.5 text-xs">
-                          {t("property.call")}
-                        </a>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
-          {session?.user && property.listingType === "rent" && property.tenant && (
-            <div className="mt-5 border-t border-ink-100 pt-5">
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">
-                {t("property.tenantSection")}
-              </p>
-              {property.tenant.name && (
-                <p className="mt-2 font-medium text-ink-800">{property.tenant.name}</p>
-              )}
-              {property.tenant.phone && (
-                <p className="mt-1 text-sm text-ink-600">{property.tenant.phone}</p>
-              )}
-              {property.tenant.idNumber && (
-                <p className="mt-1 text-sm text-ink-600">
-                  {t("property.tenantIdNumber")}: {property.tenant.idNumber}
-                </p>
-              )}
-            </div>
-          )}
-        </aside>
       </div>
+      <dialog ref={galleryDialog} className="editorial-lightbox" aria-label={t("property.viewFullImage")}>
+        <div className="flex items-center justify-between gap-4 border-b border-ink-100 bg-white p-4"><p>{property.title}</p><button type="button" className="btn-secondary" onClick={() => galleryDialog.current?.close()}>{t("common.close")}</button></div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {images[activeImage] && <img src={images[activeImage]} alt={property.title} className="max-h-[80vh] w-full object-contain" />}
+      </dialog>
 
       <ConfirmDialog
         open={confirmOpen}

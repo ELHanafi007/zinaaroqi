@@ -1,3 +1,4 @@
+import { configuredPublicSiteOrigin } from "@/lib/site-url";
 import type { Metadata } from "next";
 import mongoose from "mongoose";
 import { cache } from "react";
@@ -9,7 +10,8 @@ import { serializeProperty } from "@/lib/mongodb/serialize";
 import type { PropertyDTO } from "@/types/property";
 import PropertyDetailsClient from "./PropertyDetailsClient";
 
-const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+const publicOrigin = configuredPublicSiteOrigin();
+const baseUrl = publicOrigin || process.env.NEXTAUTH_URL || "http://localhost:3000";
 
 const FALLBACK_METADATA: Metadata = {
   title: "Listing",
@@ -69,7 +71,7 @@ export async function generateMetadata({
     const image = property.images[0];
 
     return {
-      // Root layout's title template appends "| Maskan" automatically.
+      // Root layout's title template appends "| 41 للعقارت" automatically.
       title: property.title,
       description,
       alternates: { canonical: `/properties/${property._id}` },
@@ -140,7 +142,7 @@ export default async function PropertyDetailsPage({ params }: { params: { id: st
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       )}
-      <PropertyDetailsClient />
+      <PropertyDetailsClient publicOrigin={publicOrigin} />
     </>
   );
 }

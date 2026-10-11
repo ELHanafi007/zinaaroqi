@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isGoogleMapsUrl } from "@/lib/maps";
 
 const ownerSchema = z.object({
   name: z.string().trim().min(2, "Owner name is required."),
@@ -9,7 +10,8 @@ const ownerSchema = z.object({
 
 const locationSchema = z.object({
   address: z.string().trim().max(300).optional().or(z.literal("")),
-  city: z.string().trim().min(2, "City is required."),
+  city: z.string().trim().max(120).optional(),
+  mapUrl: z.string().trim().max(4096).refine(isGoogleMapsUrl, "Enter a Google Maps location URL.").optional(),
   district: z.string().trim().max(120).optional().or(z.literal("")),
 });
 
@@ -21,6 +23,7 @@ const detailsSchema = z.object({
   bathrooms: roomCount,
   hasKitchen: z.boolean().optional(),
   kitchenCabinetsInstalled: z.boolean().optional(),
+  acInstalled: z.boolean().optional(),
   residencyType: residencyTypeSchema,
 });
 
@@ -31,6 +34,7 @@ const tenantSchema = z.object({
 });
 
 const unitSchema = z.object({
+  isRented: z.boolean().optional(),
   name: z.string().trim().max(120).optional().or(z.literal("")),
   number: z.string().trim().max(60).optional().or(z.literal("")),
   rooms: roomCount,
@@ -48,11 +52,13 @@ export const propertyInputSchema = z
     category: z.enum(["build", "apartment", "land"], {
       message: "Choose a valid category.",
     }),
+    propertyType: z.enum(["villa", "apartment", "duplex", "floor", "shop", "other"]).optional(),
+    broughtByUserId: z.string().regex(/^[a-fA-F0-9]{24}$/, "Choose a valid system user.").optional(),
     listingType: z.enum(["sale", "rent"], {
       message: "Choose sale or rent.",
     }),
     description: z.string().trim().min(10, "Description must be at least 10 characters.").max(5000),
-    price: z.coerce.number({ message: "Price must be a number." }).positive("Price must be greater than 0."),
+    price: z.coerce.number({ message: "Price must be a number." }).positive("Price must be greater than 0.").optional(),
     rentalPeriod: z.enum(["monthly", "yearly"]).optional(),
     status: z.enum(["available", "sold", "rented"]).default("available"),
     visibility: z.enum(["public", "private"]).default("public"),

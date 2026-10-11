@@ -1,4 +1,4 @@
-# Maskan — Real Estate Management Platform
+# 41 للعقارت — Real Estate Management Platform
 
 A Next.js (App Router) + MongoDB real estate marketplace for listing and managing
 **Builds/Properties**, **Apartments**, and **Land**. Browsing listings is
@@ -118,7 +118,7 @@ second, deliberately separate visual identity — dark background, cyan/neon
 accents, monospaced KPI numbers — used for a real electrical-monitoring
 feature: manual meter readings logged per build unit, tied to the
 electricity number already stored on that unit. It's fully namespaced so it
-can never leak into Maskan's own light/warm theme:
+can never leak into 41 للعقارت's own light/warm theme:
 - Colors live under the `wv` key in `tailwind.config.ts` (`bg-wv-surface`,
   `text-wv-cyan`, `border-wv-border`, etc.) — a completely separate palette
   from `ink`/`stone`/`brass`/`moss`/`rust`.
@@ -527,3 +527,7 @@ failure (including if a request tries to set `category: "land"` with
 - There's no authentication by design, per the project brief. If you add
   accounts later, `owner` on each listing is a natural place to link a
   `userId`.
+
+### Phone number login
+
+Users can sign in with their email or assigned phone number and existing password. Admins can add a phone when creating a user, or edit the phone in the Users table (saved when the field loses focus). Phone numbers are optional and unique. Saudi mobile numbers such as `05xxxxxxxx` and `+9665xxxxxxxx` match the same account; other countries require an international number with country code. This uses password authentication, not SMS codes. Existing accounts keep email login until a phone is assigned.

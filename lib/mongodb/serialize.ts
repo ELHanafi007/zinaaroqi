@@ -7,6 +7,8 @@ export function serializeProperty(doc: PropertyHydrated): PropertyDTO {
     _id: obj._id.toString(),
     title: obj.title,
     category: obj.category,
+    propertyType: obj.propertyType,
+    broughtBy: obj.broughtBy?.userId ? { userId: obj.broughtBy.userId, name: obj.broughtBy.name } : undefined,
     listingType: obj.listingType,
     description: obj.description,
     price: obj.price,
@@ -25,6 +27,7 @@ export function serializeProperty(doc: PropertyHydrated): PropertyDTO {
       ? {
           address: obj.location.address,
           city: obj.location.city,
+          mapUrl: obj.location.mapUrl,
           district: obj.location.district,
         }
       : undefined,
@@ -33,6 +36,7 @@ export function serializeProperty(doc: PropertyHydrated): PropertyDTO {
           rooms: obj.details.rooms,
           bathrooms: obj.details.bathrooms,
           hasKitchen: obj.details.hasKitchen,
+          acInstalled: obj.details.acInstalled,
           kitchenCabinetsInstalled: obj.details.kitchenCabinetsInstalled,
           residencyType: obj.details.residencyType,
         }
@@ -45,6 +49,7 @@ export function serializeProperty(doc: PropertyHydrated): PropertyDTO {
         }
       : undefined,
     units: (obj.units ?? []).map((u: ApartmentUnit) => ({
+      isRented: u.isRented ?? Boolean(u.tenant),
       name: u.name,
       number: u.number,
       rooms: u.rooms,

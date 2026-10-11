@@ -1,4 +1,4 @@
-# Deploying Maskan to production
+# Deploying 41 للعقارت to production
 
 This app is built to deploy cleanly to **Vercel** (the natural fit for a
 Next.js App Router project — zero server config, and the same serverless
@@ -163,3 +163,16 @@ Run through these once, live:
 - Vercel's free tier has function timeout and bandwidth limits that are
   generous for a small office but worth checking against your expected
   traffic before you rely on it for something business-critical.
+
+## WhatsApp listing links
+
+Set `SITE_URL` to the public website origin (for example, `https://your-domain.com`)
+so listing shares and metadata use the public address even during local testing.
+The public site must be deployed and use the database containing those listings.
+When `SITE_URL` is absent, sharing uses a public `NEXTAUTH_URL`, Vercel's production
+domain, or the public address in the browser. Localhost and private network
+addresses do not enable the share button. Private listings still require staff
+sign-in for recipients.
+# OpenWA property buttons
+
+The optional staff **Send from office WhatsApp** action requires a separate OpenWA service. See [service setup](services/openwa/README.md) for the free session, server environment variables, and recipient verification steps.

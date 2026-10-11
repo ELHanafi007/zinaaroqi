@@ -1,11 +1,12 @@
 "use client";
 
+import { Toggle } from "./fields/ListingControls";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import type { ResidencyType } from "@/types/property";
 
 export interface UnitFormState {
-  name: string;
   number: string;
+  isRented: boolean;
   rooms: string;
   bathrooms: string;
   hasKitchen: boolean;
@@ -19,8 +20,8 @@ export interface UnitFormState {
 
 export function emptyUnit(): UnitFormState {
   return {
-    name: "",
     number: "",
+    isRented: false,
     rooms: "",
     bathrooms: "",
     hasKitchen: false,
@@ -43,19 +44,26 @@ export function emptyUnit(): UnitFormState {
 export function BuildUnitsForm({
   units,
   onChange,
-  listingType,
 }: {
   units: UnitFormState[];
   onChange: (units: UnitFormState[]) => void;
-  listingType: "sale" | "rent";
 }) {
   const { t } = useLanguage();
+
+  function newUnit(existing: UnitFormState[]): UnitFormState {
+    const used = new Set(existing.map((unit) => unit.number.trim()));
+    let number = 1;
+    while (used.has(String(number))) number++;
+    return { ...emptyUnit(), number: String(number) };
+  }
 
   function setCount(rawCount: number) {
     const count = Math.max(0, Math.min(200, Math.round(rawCount || 0)));
     if (count === units.length) return;
     if (count > units.length) {
-      onChange([...units, ...Array.from({ length: count - units.length }, emptyUnit)]);
+      const next = [...units];
+      while (next.length < count) next.push(newUnit(next));
+      onChange(next);
     } else {
       onChange(units.slice(0, count));
     }
@@ -66,7 +74,7 @@ export function BuildUnitsForm({
   }
 
   function addUnit() {
-    onChange([...units, emptyUnit()]);
+    if (units.length < 200) onChange([...units, newUnit(units)]);
   }
 
   function removeUnit(idx: number) {
@@ -97,7 +105,7 @@ export function BuildUnitsForm({
               onChange={(e) => setCount(Number(e.target.value))}
             />
           </div>
-          <button type="button" onClick={addUnit} className="btn-secondary whitespace-nowrap">
+          <button type="button" onClick={addUnit} disabled={units.length >= 200} className="btn-secondary whitespace-nowrap">
             {t("form.addUnit")}
           </button>
         </div>
@@ -111,7 +119,7 @@ export function BuildUnitsForm({
             <div key={idx} className="rounded-lg border border-ink-100 bg-white p-4">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">
-                  {t("form.apartmentOrdinal")} {idx + 1}
+                  {t("form.apartmentOrdinal")} {unit.number || idx + 1}
                 </p>
                 <button
                   type="button"
@@ -122,20 +130,8 @@ export function BuildUnitsForm({
                 </button>
               </div>
 
-              <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-4">
-                <div>
-                  <label className="label-field" htmlFor={`unit-name-${idx}`}>
-                    {t("form.unitName")}
-                  </label>
-                  <input
-                    id={`unit-name-${idx}`}
-                    className="input-field"
-                    value={unit.name}
-                    onChange={(e) => updateUnit(idx, "name", e.target.value)}
-                    placeholder={t("form.unitNamePlaceholder")}
-                  />
-                </div>
-                <div>
+              <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-2">
                   <label className="label-field" htmlFor={`unit-number-${idx}`}>
                     {t("form.unitNumber")}
                   </label>
@@ -171,7 +167,7 @@ export function BuildUnitsForm({
                 </div>
               </div>
 
-              <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-4">
+              <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <label className="label-field" htmlFor={`unit-electricity-${idx}`}>
                     {t("form.electricityNumber")}
@@ -184,44 +180,15 @@ export function BuildUnitsForm({
                     placeholder={t("form.electricityNumberPlaceholder")}
                   />
                 </div>
-                <label className="flex items-center gap-2 self-end pb-2 text-sm text-ink-700">
-                  <input
-                    type="checkbox"
-                    checked={unit.hasKitchen}
-                    onChange={(e) => updateUnit(idx, "hasKitchen", e.target.checked)}
-                    className="h-4 w-4 rounded border-ink-300"
-                  />
-                  {t("form.hasKitchen")}
-                </label>
-                <label className="flex items-center gap-2 self-end pb-2 text-sm text-ink-700">
-                  <input
-                    type="checkbox"
-                    checked={unit.kitchenCabinetsInstalled}
-                    onChange={(e) => updateUnit(idx, "kitchenCabinetsInstalled", e.target.checked)}
-                    className="h-4 w-4 rounded border-ink-300"
-                  />
-                  {t("form.kitchenCabinetsInstalled")}
-                </label>
+                <Toggle checked={unit.hasKitchen} onChange={(checked) => updateUnit(idx, "hasKitchen", checked)} label={t("form.hasKitchen")} />
+                <Toggle checked={unit.kitchenCabinetsInstalled} onChange={(checked) => updateUnit(idx, "kitchenCabinetsInstalled", checked)} label={t("form.kitchenCabinetsInstalled")} />
               </div>
 
-              <div className="mt-3">
-                <label className="label-field" htmlFor={`unit-residency-${idx}`}>
-                  {t("form.residencyType")}
-                </label>
-                <select
-                  id={`unit-residency-${idx}`}
-                  className="input-field sm:w-64"
-                  value={unit.residencyType}
-                  onChange={(e) => updateUnit(idx, "residencyType", e.target.value as ResidencyType | "")}
-                >
-                  <option value="">{t("form.residencyTypeAny")}</option>
-                  <option value="family">{t("form.residencyTypeFamily")}</option>
-                  <option value="singles">{t("form.residencyTypeSingles")}</option>
-                  <option value="women_only">{t("form.residencyTypeWomenOnly")}</option>
-                </select>
+              <div className="mt-4">
+                <Toggle checked={unit.isRented} onChange={(checked) => updateUnit(idx, "isRented", checked)} label={t("form.unitRented")} />
               </div>
 
-              {listingType === "rent" && (
+              {unit.isRented && (
                 <div className="mt-4 border-t border-ink-100 pt-4">
                   <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">
                     {t("form.tenantSection")}

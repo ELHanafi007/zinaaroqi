@@ -52,7 +52,7 @@ export default function EditListingPage() {
     status === "ready" && property && session?.user.role === "project_manager" && property.category !== "build";
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-[1440px] px-4 py-10 sm:px-6 lg:px-8">
       <p className="text-xs font-semibold uppercase tracking-widest text-brass-600">
         {t("form.editEyebrow")}
       </p>
@@ -72,7 +72,7 @@ export default function EditListingPage() {
         )}
         {status === "error" && <ErrorState onRetry={load} />}
         {status === "ready" && property && !blockedForRole && (
-          <div className="rounded-lg border border-ink-100 bg-white p-6 shadow-card sm:p-8">
+          <div className="mt-6">
             {property.category === "apartment" && <ApartmentForm property={property} />}
             {property.category === "build" && <BuildForm property={property} />}
             {property.category === "land" && <LandForm property={property} />}

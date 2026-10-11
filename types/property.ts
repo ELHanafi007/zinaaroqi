@@ -21,7 +21,8 @@ export interface Owner {
 
 export interface Location {
   address?: string;
-  city: string;
+  city?: string;
+  mapUrl?: string;
   district?: string;
 }
 
@@ -30,6 +31,7 @@ export interface PropertyDetails {
   bathrooms?: number;
   hasKitchen?: boolean;
   kitchenCabinetsInstalled?: boolean;
+  acInstalled?: boolean;
   residencyType?: ResidencyType;
 }
 
@@ -40,6 +42,7 @@ export interface Tenant {
 }
 
 export interface ApartmentUnit {
+  isRented?: boolean;
   name?: string;
   number?: string;
   rooms?: number;
@@ -55,9 +58,12 @@ export interface PropertyDTO {
   _id: string;
   title: string;
   category: Category;
+  propertyType?: "villa" | "apartment" | "duplex" | "floor" | "shop" | "other";
+  broughtBy?: { userId: string; name: string };
+
   listingType: ListingType;
   description: string;
-  price: number;
+  price?: number;
   rentalPeriod?: RentalPeriod;
   status: ListingStatus;
   visibility: Visibility;

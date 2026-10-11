@@ -34,3 +34,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# OpenWA authenticated browser sessions
+_IGNORE_*/
+/services/openwa/node_modules/

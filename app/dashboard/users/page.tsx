@@ -26,7 +26,7 @@ export default function UsersPage() {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "real_estate_officer" as UserRole });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", role: "real_estate_officer" as UserRole });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -62,7 +62,7 @@ export default function UsersPage() {
     try {
       const res = await createUser(form);
       setUsers((prev) => [res.data, ...prev]);
-      setForm({ name: "", email: "", password: "", role: "real_estate_officer" });
+      setForm({ name: "", email: "", phone: "", password: "", role: "real_estate_officer" });
     } catch (err) {
       if (err instanceof ApiClientError) {
         setFormError(err.message);
@@ -72,6 +72,19 @@ export default function UsersPage() {
       }
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function handlePhoneChange(user: UserDTO, phone: string) {
+    if (phone === (user.phone || "")) return;
+    try {
+      const res = await updateUser(user._id, { phone });
+      setUsers((list) => list.map((u) => u._id === user._id ? res.data : u));
+    } catch (err) {
+      if (err instanceof ApiClientError) alert(err.fieldErrors?.phone || err.message);
+      // Remount the uncontrolled input to restore the persisted value.
+      setUsers((list) => list.map((u) => u._id === user._id ? { ...u } : u));
+      load();
     }
   }
 
@@ -158,6 +171,13 @@ export default function UsersPage() {
             {formErrors.email && <p className="field-error">{formErrors.email}</p>}
           </div>
           <div>
+            <label className="label-field" htmlFor="phone">{t("auth.phone")}</label>
+            <input id="phone" type="tel" dir="ltr" autoComplete="tel" className="input-field"
+              placeholder="05xxxxxxxx / +9665xxxxxxxx" value={form.phone}
+              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />
+            {formErrors.phone && <p className="field-error">{formErrors.phone}</p>}
+          </div>
+          <div>
             <label className="label-field" htmlFor="password">{t("auth.password")}</label>
             <input
               id="password"
@@ -201,6 +221,7 @@ export default function UsersPage() {
                 <tr className="border-b border-ink-100 text-xs uppercase tracking-wide text-ink-400">
                   <th className="px-4 py-3 text-start font-semibold">{t("users.name")}</th>
                   <th className="px-4 py-3 text-start font-semibold">{t("auth.email")}</th>
+                  <th className="px-4 py-3 text-start font-semibold">{t("auth.phone")}</th>
                   <th className="px-4 py-3 text-start font-semibold">{t("users.role")}</th>
                   <th className="px-4 py-3 text-start font-semibold">{t("users.active")}</th>
                   <th className="px-4 py-3 text-end font-semibold">{t("dashboard.table.actions")}</th>
@@ -216,6 +237,12 @@ export default function UsersPage() {
                         {isSelf && <span className="ms-2 text-xs font-normal text-ink-400">({t("users.you")})</span>}
                       </td>
                       <td className="px-4 py-3 text-ink-500">{u.email}</td>
+                      <td className="px-4 py-3">
+                        <input key={u.phone || "empty"} type="tel" dir="ltr" className="input-field min-w-[180px]"
+                          aria-label={`${t("auth.phone")} — ${u.name}`} defaultValue={u.phone || ""}
+                          onBlur={(e) => handlePhoneChange(u, e.target.value)}
+                          onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} />
+                      </td>
                       <td className="px-4 py-3">
                         <select
                           value={u.role}

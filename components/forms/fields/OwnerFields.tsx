@@ -1,5 +1,8 @@
 "use client";
 
+import { Icon } from "@/components/ui/Icon";
+
+import { Toggle } from "./ListingControls";
 import type { ListingFormState } from "@/lib/forms/useListingFormState";
 
 export function OwnerFields({
@@ -15,14 +18,16 @@ export function OwnerFields({
 }) {
   return (
     <section>
-      <h3 className="font-display text-base font-semibold text-ink-800">
+      <h3 className="flex flex-wrap items-center gap-2 font-display text-base font-semibold text-ink-800"><Icon name="user" className="h-5 w-5 text-moss-500" />
         {t("form.ownerSection")} <span className="font-body text-xs font-normal text-ink-400">{t("form.optionalHint")}</span>
       </h3>
-      <div className="mt-3 grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div className="mt-3"><Toggle checked={form.hasOwner} onChange={(checked) => update("hasOwner", checked)} label={t("form.hasOwner")} /></div>
+      {form.hasOwner && <div className="mt-3 grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
           <label className="label-field" htmlFor="ownerName">{t("form.ownerName")}</label>
           <input
             id="ownerName"
+            required
             className="input-field"
             value={form.ownerName}
             onChange={(e) => update("ownerName", e.target.value)}
@@ -33,6 +38,8 @@ export function OwnerFields({
           <label className="label-field" htmlFor="ownerPhone">{t("form.ownerPhone")}</label>
           <input
             id="ownerPhone"
+            type="tel"
+            required
             className="input-field"
             value={form.ownerPhone}
             onChange={(e) => update("ownerPhone", e.target.value)}
@@ -60,7 +67,7 @@ export function OwnerFields({
             placeholder={t("form.ownerNotesPlaceholder")}
           />
         </div>
-      </div>
+      </div>}
     </section>
   );
 }

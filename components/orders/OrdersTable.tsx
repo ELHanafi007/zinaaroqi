@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { OrderWhatsAppDialog } from "./OrderWhatsAppDialog";
+import { Icon } from "@/components/ui/Icon";
 import { useState } from "react";
 import type { OrderDTO, OrderStatus } from "@/types/order";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -28,6 +30,7 @@ export function OrdersTable({
   const isAdmin = session?.user.role === "admin";
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [shareOrder, setShareOrder] = useState<OrderDTO | null>(null);
 
   async function handleStatusChange(order: OrderDTO, status: OrderStatus) {
     const optimistic = orders.map((o) => (o._id === order._id ? { ...o, status } : o));
@@ -108,6 +111,9 @@ export function OrdersTable({
                 <td className="px-4 py-3 text-ink-400">{formatDate(order.updatedAt, locale)}</td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-2">
+                    <button type="button" onClick={() => setShareOrder(order)} className="btn-secondary px-3 py-1.5 text-xs text-moss-600" aria-label={`${t("orders.sendGroup")}: ${order.customerName}`}>
+                      <Icon name="whatsapp" className="h-4 w-4" />{t("orders.sendGroup")}
+                    </button>
                     <Link href={`/dashboard/orders/${order._id}/edit`} className="btn-secondary px-3 py-1.5 text-xs">
                       {t("common.edit")}
                     </Link>
@@ -126,6 +132,8 @@ export function OrdersTable({
           </tbody>
         </table>
       </div>
+
+      {shareOrder && <OrderWhatsAppDialog order={shareOrder} onClose={() => setShareOrder(null)} />}
 
       <ConfirmDialog
         open={Boolean(pendingDeleteId)}

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ListingFormState } from "@/lib/forms/useListingFormState";
-import type { Visibility } from "@/types/property";
+import { SegmentedControl } from "./ListingControls";
 
 export function VisibilityField({
   form,
@@ -14,16 +14,16 @@ export function VisibilityField({
 }) {
   return (
     <div>
-      <label className="label-field" htmlFor="visibility">{t("form.visibility")}</label>
-      <select
-        id="visibility"
-        className="input-field"
+      <SegmentedControl
+        name="visibility"
+        label={t("form.visibility")}
         value={form.visibility}
-        onChange={(e) => update("visibility", e.target.value as Visibility)}
-      >
-        <option value="public">{t("form.visibilityPublic")}</option>
-        <option value="private">{t("form.visibilityPrivate")}</option>
-      </select>
+        options={[
+          { value: "public", label: t("form.visibilityPublic") },
+          { value: "private", label: t("form.visibilityPrivate") },
+        ]}
+        onChange={(value) => update("visibility", value)}
+      />
       <p className="mt-1.5 text-xs text-ink-400">
         {form.visibility === "public" ? t("form.visibilityPublicNote") : t("form.visibilityPrivateNote")}
       </p>

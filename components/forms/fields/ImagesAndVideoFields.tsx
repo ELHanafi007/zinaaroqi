@@ -1,5 +1,7 @@
 "use client";
 
+import { Icon } from "@/components/ui/Icon";
+
 import { useRef, useState } from "react";
 import type { ListingFormState } from "@/lib/forms/useListingFormState";
 import { ApiClientError, uploadImage } from "@/lib/api-client";
@@ -59,7 +61,7 @@ export function ImagesAndVideoFields({
   return (
     <>
       <section>
-        <h3 className="font-display text-base font-semibold text-ink-800">{t("form.videoSection")}</h3>
+        <h3 className="flex flex-wrap items-center gap-2 font-display text-base font-semibold text-ink-800"><Icon name="video" className="h-5 w-5 text-moss-500" />{t("form.videoSection")}</h3>
         <p className="mt-1 text-sm text-ink-400">{t("form.videoHint")}</p>
         <div className="mt-3 flex flex-col gap-2 sm:flex-row">
           <input
@@ -94,7 +96,7 @@ export function ImagesAndVideoFields({
       </section>
 
       <section>
-        <h3 className="font-display text-base font-semibold text-ink-800">{t("form.imagesSection")}</h3>
+        <h3 className="flex flex-wrap items-center gap-2 font-display text-base font-semibold text-ink-800"><Icon name="image" className="h-5 w-5 text-moss-500" />{t("form.imagesSection")}</h3>
         <p className="mt-1 text-sm text-ink-400">{t("form.imagesHint")}</p>
 
         <div className="mt-3 flex flex-wrap items-center gap-3">

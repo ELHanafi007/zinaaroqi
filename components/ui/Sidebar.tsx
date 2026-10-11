@@ -1,5 +1,6 @@
 "use client";
 
+import { Icon, type IconName } from "./Icon";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
@@ -30,14 +31,14 @@ function roleLabelKey(role: UserRole): string {
 interface NavItem {
   href: string;
   labelKey: string;
-  mark: string;
+  mark: IconName;
 }
 
 const BROWSE_ITEMS: NavItem[] = [
-  { href: "/", labelKey: "nav.allListings", mark: "◆" },
-  { href: "/apartments", labelKey: "nav.apartments", mark: "A" },
-  { href: "/builds", labelKey: "nav.builds", mark: "B" },
-  { href: "/lands", labelKey: "nav.lands", mark: "L" },
+  { href: "/", labelKey: "nav.allListings", mark: "grid" },
+  { href: "/apartments", labelKey: "nav.apartments", mark: "home" },
+  { href: "/builds", labelKey: "nav.builds", mark: "building" },
+  { href: "/lands", labelKey: "nav.lands", mark: "land" },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -49,7 +50,8 @@ function isActive(pathname: string, href: string) {
       pathname === "/dashboard" ||
       (pathname.startsWith("/dashboard/") &&
         !pathname.startsWith("/dashboard/orders") &&
-        !pathname.startsWith("/dashboard/users"))
+        !pathname.startsWith("/dashboard/users") &&
+        !pathname.startsWith("/dashboard/whatsapp"))
     );
   }
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -62,22 +64,16 @@ function NavLink({ item, pathname, onNavigate }: { item: NavItem; pathname: stri
   return (
     <Link
       href={item.href}
+      aria-current={active ? "page" : undefined}
       onClick={onNavigate}
       className={[
-        "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition",
+        "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition",
         active
           ? "bg-ink-800 text-stone-50"
           : "text-ink-600 hover:bg-ink-50 hover:text-ink-800",
       ].join(" ")}
     >
-      <span
-        className={[
-          "flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-sm border text-[10px] leading-none",
-          active ? "border-stone-50/40 text-stone-50" : "border-ink-300 text-ink-400",
-        ].join(" ")}
-      >
-        {item.mark}
-      </span>
+      <Icon name={item.mark} className={`h-5 w-5 ${active ? "text-brass-100" : "text-ink-400"}`} />
       {t(item.labelKey)}
     </Link>
   );
@@ -91,19 +87,20 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const role = session?.user.role;
   const adminItems: NavItem[] = [];
   if (role && LISTINGS_ROLES.includes(role)) {
-    adminItems.push({ href: "/dashboard", labelKey: "nav.dashboard", mark: "◇" });
+    adminItems.push({ href: "/dashboard", labelKey: "nav.dashboard", mark: "grid" });
   }
   if (role && ORDERS_ROLES.includes(role)) {
-    adminItems.push({ href: "/dashboard/orders", labelKey: "nav.orders", mark: "✓" });
+    adminItems.push({ href: "/dashboard/orders", labelKey: "nav.orders", mark: "clipboard" });
   }
   if (role === "admin") {
-    adminItems.push({ href: "/dashboard/users", labelKey: "nav.users", mark: "◈" });
+    adminItems.push({ href: "/dashboard/users", labelKey: "nav.users", mark: "users" });
+    adminItems.push({ href: "/dashboard/whatsapp", labelKey: "whatsappConnection.title", mark: "phone" });
   }
 
   return (
-    <nav className="flex h-full flex-col gap-6 overflow-y-auto p-4">
+    <nav className="flex h-full flex-col gap-8 overflow-y-auto p-5">
       <div>
-        <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-widest text-ink-300">
+        <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-widest text-ink-500">
           {t("nav.browseSection")}
         </p>
         <div className="space-y-1">
@@ -115,7 +112,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 
       {status === "authenticated" && adminItems.length > 0 && (
         <div>
-          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-widest text-ink-300">
+          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-widest text-ink-500">
             {t("nav.adminSection")}
           </p>
           <div className="space-y-1">

@@ -5,6 +5,7 @@ export type UserRole = "admin" | "real_estate_officer" | "sales_officer" | "proj
 export interface UserDocument {
   name: string;
   email: string;
+  phone?: string;
   passwordHash: string;
   role: UserRole;
   active: boolean;
@@ -23,6 +24,7 @@ const UserSchema = new Schema<UserDocument>(
       unique: true,
       maxlength: 200,
     },
+    phone: { type: String, trim: true, unique: true, sparse: true },
     passwordHash: { type: String, required: true },
     role: {
       type: String,

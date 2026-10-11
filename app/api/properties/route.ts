@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { connectToDatabase } from "@/lib/mongodb/connect";
+import { User } from "@/models/User";
 import { Property } from "@/models/Property";
 import { serializeProperty } from "@/lib/mongodb/serialize";
 import { propertyInputSchema, flattenZodErrors } from "@/lib/validations/property";
@@ -66,7 +67,7 @@ export async function GET(req: NextRequest) {
         ],
       });
     }
-    if (isStaff && residencyType && ["family", "singles", "women_only"].includes(residencyType)) {
+    if (category !== "land" && isStaff && residencyType && ["family", "singles", "women_only"].includes(residencyType)) {
       // Residency type ("Suitable for") is staff-only info now — a
       // signed-out visitor can't filter by it any more than they can see
       // it displayed. An apartment's own details, or any individual unit
@@ -74,6 +75,26 @@ export async function GET(req: NextRequest) {
       andConditions.push({
         $or: [{ "details.residencyType": residencyType }, { "units.residencyType": residencyType }],
       });
+    }
+    if (category !== "land") {
+      const propertyType = searchParams.get("propertyType");
+      if (propertyType && ["villa", "apartment", "duplex", "floor", "shop", "other"].includes(propertyType)) {
+        andConditions.push(propertyType === "apartment" ? { category: "apartment", $or: [{ propertyType: "apartment" }, { propertyType: { $exists: false } }] } : { propertyType });
+      }
+      const rooms = Number(searchParams.get("rooms"));
+      if (Number.isFinite(rooms) && rooms > 0) filter["details.rooms"] = { $gte: rooms };
+    }
+    const priceRange: Record<string, number> = {};
+    for (const [parameter, operator] of [["minPrice", "$gte"], ["maxPrice", "$lte"]]) {
+      const raw = searchParams.get(parameter);
+      const value = Number(raw);
+      if (raw && Number.isFinite(value) && value >= 0) priceRange[operator] = value;
+    }
+    if (Object.keys(priceRange).length) filter.price = priceRange;
+    const location = searchParams.get("location")?.trim();
+    if (location) {
+      const literal = location.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      andConditions.push({ $or: ["city", "district", "address"].map(key => ({ [`location.${key}`]: { $regex: literal, $options: "i" } })) });
     }
     if (andConditions.length > 0) {
       filter.$and = andConditions;
@@ -167,8 +188,14 @@ export async function POST(req: NextRequest) {
 
     // Belt-and-suspenders: strip rentalPeriod for land/sale, and units for
     // non-build categories, even if it slipped through client-side.
+    const selectedUser = data.broughtByUserId ? await User.findById(data.broughtByUserId).select("name active") : null;
+    if (data.broughtByUserId && !selectedUser) {
+      return NextResponse.json({ error: "Choose an existing system user.", fieldErrors: { broughtByUserId: "User no longer exists." } }, { status: 400 });
+    }
     const payload = {
       ...data,
+      propertyType: data.category === "apartment" ? data.propertyType : undefined,
+      broughtBy: selectedUser ? { userId: selectedUser._id.toString(), name: selectedUser.name } : undefined,
       rentalPeriod: data.listingType === "rent" ? data.rentalPeriod : undefined,
       tiktokUrl: data.tiktokUrl || undefined,
       owner: data.owner

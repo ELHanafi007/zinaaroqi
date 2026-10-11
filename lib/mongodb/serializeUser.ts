@@ -7,6 +7,7 @@ export function serializeUser(doc: UserHydrated): UserDTO {
     _id: obj._id.toString(),
     name: obj.name,
     email: obj.email,
+    phone: obj.phone,
     role: obj.role,
     active: obj.active,
     createdAt: new Date(obj.createdAt).toISOString(),

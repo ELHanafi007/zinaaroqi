@@ -6,6 +6,7 @@ export interface PropertyDetails {
   bathrooms?: number;
   hasKitchen?: boolean;
   kitchenCabinetsInstalled?: boolean;
+  acInstalled?: boolean;
   residencyType?: ResidencyType;
 }
 
@@ -16,6 +17,7 @@ export interface Tenant {
 }
 
 export interface ApartmentUnit {
+  isRented?: boolean;
   name?: string;
   number?: string;
   rooms?: number;
@@ -30,9 +32,12 @@ export interface ApartmentUnit {
 export interface PropertyDocument {
   title: string;
   category: Category;
+  propertyType?: "villa" | "apartment" | "duplex" | "floor" | "shop" | "other";
+  broughtBy?: { userId: string; name: string };
+
   listingType: ListingType;
   description: string;
-  price: number;
+  price?: number;
   rentalPeriod?: RentalPeriod;
   status: ListingStatus;
   visibility: Visibility;
@@ -44,7 +49,8 @@ export interface PropertyDocument {
   };
   location?: {
     address?: string;
-    city: string;
+    city?: string;
+    mapUrl?: string;
     district?: string;
   };
   details?: PropertyDetails;
@@ -69,7 +75,8 @@ const OwnerSchema = new Schema(
 const LocationSchema = new Schema(
   {
     address: { type: String, trim: true },
-    city: { type: String, required: true, trim: true },
+    city: { type: String, trim: true },
+    mapUrl: { type: String, trim: true },
     district: { type: String, trim: true },
   },
   { _id: false }
@@ -81,6 +88,7 @@ const DetailsSchema = new Schema(
     bathrooms: { type: Number, min: 0 },
     hasKitchen: { type: Boolean },
     kitchenCabinetsInstalled: { type: Boolean },
+    acInstalled: { type: Boolean },
     residencyType: { type: String, enum: ["family", "singles", "women_only"] },
   },
   { _id: false }
@@ -97,6 +105,7 @@ const TenantSchema = new Schema(
 
 const UnitSchema = new Schema(
   {
+    isRented: { type: Boolean },
     name: { type: String, trim: true },
     number: { type: String, trim: true },
     rooms: { type: Number, min: 0 },
@@ -113,6 +122,8 @@ const UnitSchema = new Schema(
 const PropertySchema = new Schema<PropertyDocument>(
   {
     title: { type: String, required: true, trim: true, maxlength: 160 },
+    propertyType: { type: String, enum: ["villa", "apartment", "duplex", "floor", "shop", "other"] },
+    broughtBy: { userId: { type: String }, name: { type: String } },
     category: {
       type: String,
       required: true,
@@ -124,7 +135,7 @@ const PropertySchema = new Schema<PropertyDocument>(
       enum: ["sale", "rent"],
     },
     description: { type: String, required: true, trim: true, maxlength: 5000 },
-    price: { type: Number, required: true, min: 0 },
+    price: { type: Number, min: 0 },
     rentalPeriod: {
       type: String,
       enum: ["monthly", "yearly"],
@@ -205,14 +216,17 @@ function enforceUnitsOnlyForBuilds(doc: Partial<PropertyDocument>) {
 
 /**
  * Tenant records (name, ID number, phone) only make sense for rentals.
- * If a listing (or a unit's parent listing) is switched to "sale", any
- * tenant info is cleared automatically rather than left stale.
+ * A building can be for sale while individual apartments remain rented.
+ * Explicitly rented units retain their tenant records independently of
+ * the parent listing type; unrented units clear their tenant information.
  */
 function enforceTenantOnlyForRentals(doc: Partial<PropertyDocument>) {
   if (doc.listingType !== "rent") {
     doc.tenant = undefined;
     if (doc.units) {
-      doc.units = doc.units.map((u) => ({ ...u, tenant: undefined }));
+      for (const unit of doc.units) {
+        if (unit.isRented !== true) unit.tenant = undefined;
+      }
     }
   }
 }
@@ -223,6 +237,9 @@ PropertySchema.pre("validate", function (next) {
     enforceStatusConsistency(this as unknown as Partial<PropertyDocument>);
     enforceUnitsOnlyForBuilds(this as unknown as Partial<PropertyDocument>);
     enforceTenantOnlyForRentals(this as unknown as Partial<PropertyDocument>);
+    for (const unit of this.units ?? []) {
+      if (unit.isRented === false) unit.tenant = undefined;
+    }
     next();
   } catch (err) {
     next(err as Error);
@@ -262,10 +279,19 @@ PropertySchema.pre("findOneAndUpdate", function (next) {
     unset.tenant = "";
     if (Array.isArray(flat.units)) {
       flat.units = flat.units.map((u: Record<string, any>) => {
+        if (u.isRented === true) return u;
         const { tenant, ...rest } = u;
         return rest;
       });
     }
+  }
+
+  if (Array.isArray(flat.units)) {
+    flat.units = flat.units.map((u: Record<string, any>) => {
+      if (u.isRented !== false) return u;
+      const { tenant, ...rest } = u;
+      return rest;
+    });
   }
 
   if (Object.keys(unset).length > 0) {
@@ -282,6 +308,14 @@ PropertySchema.index({ price: 1 });
 PropertySchema.index({ createdAt: -1 });
 
 export type PropertyHydrated = HydratedDocument<PropertyDocument>;
+
+// Next.js hot reload can retain a model compiled before these fields existed.
+// Mongoose silently strips unknown fields from updates, so replace that stale
+// model rather than losing the selected offer source or property type.
+const cachedProperty = mongoose.models.Property as Model<PropertyDocument> | undefined;
+if (cachedProperty && (!cachedProperty.schema.path("broughtBy.userId") || !cachedProperty.schema.path("propertyType"))) {
+  mongoose.deleteModel("Property");
+}
 
 export const Property: Model<PropertyDocument> =
   (mongoose.models.Property as Model<PropertyDocument>) ||

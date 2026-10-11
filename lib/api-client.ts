@@ -28,6 +28,7 @@ async function handle<T>(res: Response): Promise<T> {
 
 export function buildQuery(filters: Partial<FilterState> & { page?: number; limit?: number }) {
   const params = new URLSearchParams();
+  for (const key of ["propertyType", "minPrice", "maxPrice", "rooms", "location"] as const) { if (filters[key]) params.set(key, filters[key]!); }
   if (filters.search) params.set("search", filters.search);
   if (filters.category) params.set("category", filters.category);
   if (filters.listingType) params.set("listingType", filters.listingType);

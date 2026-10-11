@@ -1,23 +1,18 @@
 "use client";
 
-import type { Category } from "@/types/property";
+import { Icon, type IconName } from "@/components/ui/Icon";
+import type { Category, PropertyDTO } from "@/types/property";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
-const MARK: Record<Category, string> = {
-  build: "B",
-  apartment: "A",
-  land: "L",
-};
+const MARK: Record<Category, IconName> = { build: "building", apartment: "home", land: "land" };
 
-export function CategoryBadge({ category }: { category: Category }) {
+export function CategoryBadge({ category, propertyType }: { category: Category; propertyType?: PropertyDTO["propertyType"] }) {
   const { t } = useLanguage();
 
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-sm border border-ink-200 bg-white/90 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-ink-700">
-      <span className="flex h-4 w-4 items-center justify-center rounded-full border border-ink-300 text-[9px] leading-none text-ink-500">
-        {MARK[category]}
-      </span>
-      {t(`badges.category.${category}`)}
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-ink-200 bg-white/90 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-ink-700">
+      <Icon name={MARK[category]} className="h-3.5 w-3.5 text-ink-500" />
+      {propertyType ? t(`offer.types.${propertyType}`) : t(`badges.category.${category}`)}
     </span>
   );
 }

@@ -18,6 +18,9 @@ export async function GET() {
     const docs = await User.find({}).sort({ createdAt: -1 });
     return NextResponse.json({ data: docs.map(serializeUser) }, { status: 200 });
   } catch (err) {
+    if (err && typeof err === "object" && "code" in err && err.code === 11000) {
+      return NextResponse.json({ error: "Email or phone number is already in use." }, { status: 409 });
+    }
     console.error("GET /api/users failed:", err);
     return NextResponse.json({ error: "Failed to load users." }, { status: 500 });
   }
@@ -48,10 +51,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (parsed.data.phone) {
+      const phoneOwner = await User.findOne({ phone: parsed.data.phone });
+      if (phoneOwner) {
+        return NextResponse.json(
+          { error: "A user with that phone number already exists.", fieldErrors: { phone: "Already in use." } },
+          { status: 409 }
+        );
+      }
+    }
+
     const passwordHash = await bcrypt.hash(parsed.data.password, 12);
     const created = await User.create({
       name: parsed.data.name,
       email: parsed.data.email,
+      ...(parsed.data.phone ? { phone: parsed.data.phone } : {}),
       passwordHash,
       role: parsed.data.role,
       active: true,
@@ -59,6 +73,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ data: serializeUser(created) }, { status: 201 });
   } catch (err) {
+    if (err && typeof err === "object" && "code" in err && err.code === 11000) {
+      return NextResponse.json({ error: "Email or phone number is already in use." }, { status: 409 });
+    }
     console.error("POST /api/users failed:", err);
     return NextResponse.json({ error: "Failed to create user." }, { status: 500 });
   }

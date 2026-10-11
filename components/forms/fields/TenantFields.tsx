@@ -1,5 +1,7 @@
 "use client";
 
+import { Icon } from "@/components/ui/Icon";
+
 import type { ListingFormState } from "@/lib/forms/useListingFormState";
 
 export function TenantFields({
@@ -13,7 +15,7 @@ export function TenantFields({
 }) {
   return (
     <section>
-      <h3 className="font-display text-base font-semibold text-ink-800">{t("form.tenantSection")}</h3>
+      <h3 className="flex flex-wrap items-center gap-2 font-display text-base font-semibold text-ink-800"><Icon name="key" className="h-5 w-5 text-moss-500" />{t("form.tenantSection")}</h3>
       <p className="mt-1 text-sm text-ink-400">{t("form.tenantHint")}</p>
       <div className="mt-3 grid grid-cols-1 gap-5 sm:grid-cols-3">
         <div>

@@ -1,3 +1,4 @@
+import { configuredPublicSiteOrigin } from "@/lib/site-url";
 import type { Metadata } from "next";
 import "./globals.css";
 import { AppShell } from "@/components/ui/AppShell";
@@ -5,13 +6,13 @@ import { LanguageProvider } from "@/lib/i18n/LanguageProvider";
 import { AuthSessionProvider } from "@/components/auth/AuthSessionProvider";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXTAUTH_URL || "http://localhost:3000"),
+  metadataBase: new URL(configuredPublicSiteOrigin() || process.env.NEXTAUTH_URL || "http://localhost:3000"),
   title: {
-    default: "Maskan | Real Estate Listings",
+    default: "41 للعقارت | Real Estate Listings",
     // Per-page metadata can just set title: "Apartments" and this template
     // appends the brand automatically, so every page's <title> stays
-    // consistent without repeating "| Maskan" everywhere.
-    template: "%s | Maskan",
+    // consistent without repeating "| 41 للعقارت" everywhere.
+    template: "%s | 41 للعقارت",
   },
   description:
     "Browse apartments, buildings, and land for sale or rent — with clear pricing, verified listings, and direct contact with our office.",
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
     follow: true,
   },
   openGraph: {
-    siteName: "Maskan",
+    siteName: "41 للعقارت",
     type: "website",
   },
 };

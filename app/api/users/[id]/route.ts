@@ -56,19 +56,33 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       }
     }
 
+    if (parsed.data.phone) {
+      const phoneOwner = await User.findOne({ phone: parsed.data.phone, _id: { $ne: params.id } });
+      if (phoneOwner) {
+        return NextResponse.json(
+          { error: "A user with that phone number already exists.", fieldErrors: { phone: "Already in use." } },
+          { status: 409 }
+        );
+      }
+    }
+
     const update: Record<string, unknown> = {};
+    if (parsed.data.phone) update.phone = parsed.data.phone;
     if (parsed.data.name) update.name = parsed.data.name;
     if (parsed.data.role) update.role = parsed.data.role;
     if (parsed.data.active !== undefined) update.active = parsed.data.active;
     if (parsed.data.password) update.passwordHash = await bcrypt.hash(parsed.data.password, 12);
 
-    const updated = await User.findByIdAndUpdate(params.id, { $set: update }, { new: true });
+    const updated = await User.findByIdAndUpdate(params.id, { $set: update, ...(parsed.data.phone === "" ? { $unset: { phone: 1 } } : {}) }, { new: true });
     if (!updated) {
       return NextResponse.json({ error: "User not found." }, { status: 404 });
     }
 
     return NextResponse.json({ data: serializeUser(updated) }, { status: 200 });
   } catch (err) {
+    if (err && typeof err === "object" && "code" in err && err.code === 11000) {
+      return NextResponse.json({ error: "Email or phone number is already in use." }, { status: 409 });
+    }
     console.error(`PUT /api/users/${params.id} failed:`, err);
     return NextResponse.json({ error: "Failed to update user." }, { status: 500 });
   }
@@ -108,6 +122,9 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     await User.findByIdAndDelete(params.id);
     return NextResponse.json({ data: { _id: params.id } }, { status: 200 });
   } catch (err) {
+    if (err && typeof err === "object" && "code" in err && err.code === 11000) {
+      return NextResponse.json({ error: "Email or phone number is already in use." }, { status: 409 });
+    }
     console.error(`DELETE /api/users/${params.id} failed:`, err);
     return NextResponse.json({ error: "Failed to delete user." }, { status: 500 });
   }

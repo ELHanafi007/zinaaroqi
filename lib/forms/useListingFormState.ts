@@ -17,8 +17,15 @@ import { type UnitFormState } from "@/components/forms/BuildUnitsForm";
 
 export interface ListingFormState {
   title: string;
+  propertyType: NonNullable<PropertyDTO["propertyType"]>;
+  broughtByUserId: string;
   listingType: ListingType;
   price: string;
+  hasPrice: boolean;
+  hasOwner: boolean;
+  hasDetails: boolean;
+  mapUrl: string;
+  acInstalled: boolean;
   rentalPeriod: RentalPeriod | "";
   status: ListingStatus;
   visibility: Visibility;
@@ -47,8 +54,15 @@ function initialState(category: Category, property?: PropertyDTO): ListingFormSt
   if (!property) {
     return {
       title: "",
+      propertyType: "apartment",
+      broughtByUserId: "",
       listingType: "sale",
       price: "",
+      hasPrice: false,
+      hasOwner: false,
+      hasDetails: false,
+      mapUrl: "",
+      acInstalled: false,
       rentalPeriod: "",
       status: "available",
       visibility: "public",
@@ -75,8 +89,15 @@ function initialState(category: Category, property?: PropertyDTO): ListingFormSt
   }
   return {
     title: property.title,
+    propertyType: property.propertyType ?? "apartment",
+    broughtByUserId: property.broughtBy?.userId ?? "",
     listingType: property.listingType,
-    price: String(property.price),
+    price: property.price != null ? String(property.price) : "",
+    hasPrice: property.price != null,
+    hasOwner: Boolean(property.owner),
+    hasDetails: Boolean(property.details),
+    mapUrl: property.location?.mapUrl ?? "",
+    acInstalled: property.details?.acInstalled ?? false,
     rentalPeriod: property.rentalPeriod ?? "",
     status: property.status,
     visibility: property.visibility,
@@ -99,8 +120,8 @@ function initialState(category: Category, property?: PropertyDTO): ListingFormSt
     tenantIdNumber: property.tenant?.idNumber ?? "",
     tenantPhone: property.tenant?.phone ?? "",
     units: (property.units ?? []).map((u) => ({
-      name: u.name ?? "",
-      number: u.number ?? "",
+      number: u.number?.trim() || u.name?.trim() || "",
+      isRented: u.isRented ?? Boolean(u.tenant),
       rooms: u.rooms != null ? String(u.rooms) : "",
       bathrooms: u.bathrooms != null ? String(u.bathrooms) : "",
       hasKitchen: u.hasKitchen ?? false,
@@ -188,10 +209,7 @@ export function useListingFormState(category: Category, property?: PropertyDTO) 
   }
 
   const payload = useMemo(() => {
-    const hasOwnerInfo = Boolean(
-      form.ownerName.trim() || form.ownerPhone.trim() || form.ownerEmail.trim() || form.ownerNotes.trim()
-    );
-    const hasLocationInfo = Boolean(form.city.trim() || form.district.trim() || form.address.trim());
+    const hasLocationInfo = Boolean(form.city.trim() || form.district.trim() || form.address.trim() || form.mapUrl.trim());
     const isRent = form.listingType === "rent";
     const hasTenantInfo = Boolean(
       form.tenantName.trim() || form.tenantIdNumber.trim() || form.tenantPhone.trim()
@@ -200,13 +218,15 @@ export function useListingFormState(category: Category, property?: PropertyDTO) 
     return {
       title: form.title,
       category,
+      propertyType: category === "apartment" ? form.propertyType : undefined,
+      broughtByUserId: form.broughtByUserId || undefined,
       listingType: isLand ? "sale" : form.listingType,
       description: form.description,
-      price: form.price,
+      price: form.hasPrice ? form.price : undefined,
       rentalPeriod: !isLand && form.listingType === "rent" ? form.rentalPeriod || undefined : undefined,
       status: form.status,
       visibility: form.visibility,
-      owner: hasOwnerInfo
+      owner: form.hasOwner
         ? {
             name: form.ownerName,
             phone: form.ownerPhone,
@@ -216,17 +236,19 @@ export function useListingFormState(category: Category, property?: PropertyDTO) 
         : undefined,
       location: hasLocationInfo
         ? {
-            city: form.city,
+            city: form.city.trim() || undefined,
+            mapUrl: form.mapUrl.trim() || undefined,
             district: form.district || undefined,
             address: form.address || undefined,
           }
         : undefined,
-      details: isLand
+      details: isLand || !form.hasDetails
         ? undefined
         : {
             rooms: form.rooms !== "" ? Number(form.rooms) : undefined,
             bathrooms: form.bathrooms !== "" ? Number(form.bathrooms) : undefined,
             hasKitchen: form.hasKitchen,
+            acInstalled: form.acInstalled,
             kitchenCabinetsInstalled: form.kitchenCabinetsInstalled,
             residencyType: form.residencyType || undefined,
           },
@@ -244,8 +266,8 @@ export function useListingFormState(category: Category, property?: PropertyDTO) 
               u.tenantName.trim() || u.tenantIdNumber.trim() || u.tenantPhone.trim()
             );
             return {
-              name: u.name.trim() || undefined,
               number: u.number.trim() || undefined,
+              isRented: u.isRented,
               rooms: u.rooms !== "" ? Number(u.rooms) : undefined,
               bathrooms: u.bathrooms !== "" ? Number(u.bathrooms) : undefined,
               hasKitchen: u.hasKitchen,
@@ -253,7 +275,7 @@ export function useListingFormState(category: Category, property?: PropertyDTO) 
               electricityNumber: u.electricityNumber.trim() || undefined,
               residencyType: u.residencyType || undefined,
               tenant:
-                isRent && hasUnitTenantInfo
+                u.isRented && hasUnitTenantInfo
                   ? {
                       name: u.tenantName || undefined,
                       idNumber: u.tenantIdNumber || undefined,

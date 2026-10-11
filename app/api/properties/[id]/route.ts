@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
 import { connectToDatabase } from "@/lib/mongodb/connect";
+import { User } from "@/models/User";
 import { Property } from "@/models/Property";
 import { serializeProperty } from "@/lib/mongodb/serialize";
 import { propertyUpdateSchema, flattenZodErrors } from "@/lib/validations/property";
@@ -81,8 +82,15 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         );
       }
     }
+    const selectedUser = data.broughtByUserId ? await User.findById(data.broughtByUserId).select("name active") : null;
+    if (data.broughtByUserId && !selectedUser) {
+      return NextResponse.json({ error: "Choose an existing system user.", fieldErrors: { broughtByUserId: "User no longer exists." } }, { status: 400 });
+    }
     const payload = {
       ...data,
+      propertyType: data.category === "apartment" ? data.propertyType : undefined,
+      broughtBy: selectedUser ? { userId: selectedUser._id.toString(), name: selectedUser.name } : undefined,
+      price: data.price,
       rentalPeriod: data.listingType === "rent" ? data.rentalPeriod : undefined,
       tiktokUrl: data.tiktokUrl || undefined,
       owner: data.owner
@@ -110,7 +118,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const set: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(payload)) {
       if (value === undefined) {
-        if (["rentalPeriod", "tiktokUrl", "owner", "location", "details", "tenant"].includes(key)) {
+        if (["propertyType", "broughtBy", "price", "rentalPeriod", "tiktokUrl", "owner", "location", "details", "tenant"].includes(key)) {
           unset[key] = "";
         }
       } else {

@@ -11,7 +11,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
 
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -21,7 +21,7 @@ function LoginForm() {
     setError(null);
     setSubmitting(true);
     const result = await signIn("credentials", {
-      email,
+      identifier,
       password,
       redirect: false,
     });
@@ -51,13 +51,15 @@ function LoginForm() {
             </div>
           )}
           <div>
-            <label className="label-field" htmlFor="email">{t("auth.email")}</label>
+            <label className="label-field" htmlFor="identifier">{t("auth.identifier")}</label>
             <input
-              id="email"
-              type="email"
+              id="identifier"
+              type="text"
+              autoComplete="username"
+              dir="ltr"
               className="input-field"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               required
               autoFocus
             />
@@ -66,6 +68,7 @@ function LoginForm() {
             <label className="label-field" htmlFor="password">{t("auth.password")}</label>
             <input
               id="password"
+              autoComplete="current-password"
               type="password"
               className="input-field"
               value={password}
