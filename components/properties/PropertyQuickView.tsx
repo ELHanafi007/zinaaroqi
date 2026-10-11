@@ -4,7 +4,6 @@ import Link from "next/link";
 import type { PropertyDTO } from "@/types/property";
 import { Icon } from "@/components/ui/Icon";
 import { CopyButton } from "@/components/ui/CopyButton";
-import { TikTokVideo } from "./TikTokVideo";
 import { fetchProperty } from "@/lib/api-client";
 import { PriceDisplay } from "./PriceDisplay";
 import { CategoryBadge } from "./CategoryBadge";
@@ -62,7 +61,6 @@ export function PropertyQuickView({ property: initialProperty, onClose }: { prop
         {session?.user && !property.owner && <p className="mt-5 text-sm text-ink-500">{t("property.ownerNotProvided")}</p>}
         {session?.user && property.owner && <div className="mt-5 border-t border-ink-100 pt-4"><div className="flex items-center justify-between gap-2"><h3 className="text-sm font-semibold">{t("property.ownerContact")}</h3><CopyButton text={[property.owner.name, property.owner.phone, property.owner.email, property.owner.notes].filter(Boolean).join("\n")} label={t("property.copyOwner")} /></div><p className="mt-2 whitespace-pre-line text-sm text-ink-600">{[property.owner.name, property.owner.phone, property.owner.email, property.owner.notes].filter(Boolean).join("\n")}</p></div>}
         {location && <div className="mt-4 flex items-center justify-between gap-2"><a href={location} target="_blank" rel="noopener noreferrer" className="text-sm text-moss-600 underline">{t("property.openLocation")}</a><CopyButton text={location} label={t("property.copyLocation")} /></div>}
-        {property.tiktokUrl && <div className="mt-5"><TikTokVideo url={property.tiktokUrl} /></div>}
         {property.tiktokUrl && <div className="mt-3 flex items-center justify-between gap-2"><a href={property.tiktokUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-moss-600 underline">{t("property.watchOnTikTok")}</a><CopyButton text={property.tiktokUrl} label={t("property.copyTikTok")} /></div>}
       </div>
     </div>

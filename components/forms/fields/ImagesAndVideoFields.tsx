@@ -2,7 +2,7 @@
 
 import { Icon } from "@/components/ui/Icon";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ListingFormState } from "@/lib/forms/useListingFormState";
 import { ApiClientError, uploadImage } from "@/lib/api-client";
 
@@ -38,6 +38,8 @@ export function ImagesAndVideoFields({
   t: (key: string) => string;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
+  useEffect(() => () => { if (localPreview) URL.revokeObjectURL(localPreview); }, [localPreview]);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -46,6 +48,7 @@ export function ImagesAndVideoFields({
     e.target.value = ""; // allow selecting the same file again later
     if (!file) return;
 
+    setLocalPreview(URL.createObjectURL(file));
     setUploadError(null);
     setUploading(true);
     try {
@@ -55,6 +58,7 @@ export function ImagesAndVideoFields({
       setUploadError(err instanceof ApiClientError ? err.message : t("form.uploadError"));
     } finally {
       setUploading(false);
+      setLocalPreview(null);
     }
   }
 
@@ -117,6 +121,11 @@ export function ImagesAndVideoFields({
           </button>
           <span className="text-xs text-ink-400">{t("form.orPasteUrl")}</span>
         </div>
+        {localPreview && <div className="mt-3 overflow-hidden rounded-xl border border-ink-100 bg-stone-50">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={localPreview} alt={t("form.imagePreview")} className="max-h-72 w-full object-contain" />
+          <p role="status" className="p-3 text-xs text-ink-500">{t("form.uploading")}</p>
+        </div>}
         {uploadError && <p className="field-error mt-2">{uploadError}</p>}
 
         <div className="mt-3 flex gap-2">
@@ -137,12 +146,14 @@ export function ImagesAndVideoFields({
           </button>
         </div>
         {form.images.length > 0 && (
-          <ul className="mt-3 space-y-2">
+          <ul className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {form.images.map((url, idx) => (
               <li
                 key={`${url}-${idx}`}
-                className="flex items-center justify-between gap-3 rounded-md border border-ink-100 bg-stone-50 px-3 py-2 text-sm text-ink-600"
+                className="overflow-hidden rounded-xl border border-ink-100 bg-stone-50 text-sm text-ink-600"
               >
+                <ImagePreview url={url} label={`${t("form.imagePreview")} ${idx + 1}`} errorLabel={t("form.imagePreviewError")} />
+                <div className="flex items-center justify-between gap-3 p-3">
                 <span className="flex min-w-0 items-center gap-2">
                   {idx === 0 && (
                     <span className="flex-shrink-0 rounded-full bg-brass-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brass-600">
@@ -158,6 +169,7 @@ export function ImagesAndVideoFields({
                 >
                   {t("form.remove")}
                 </button>
+                </div>
               </li>
             ))}
           </ul>
@@ -165,4 +177,13 @@ export function ImagesAndVideoFields({
       </section>
     </>
   );
+}
+
+function ImagePreview({ url, label, errorLabel }: { url: string; label: string; errorLabel: string }) {
+  const [failed, setFailed] = useState(false);
+  return <div className="flex h-44 items-center justify-center bg-white">
+    {failed ? <p role="status" className="px-4 text-center text-xs text-ink-500">{errorLabel}</p> :
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={url} alt={label} onError={() => setFailed(true)} className="h-full w-full object-contain" />}
+  </div>;
 }

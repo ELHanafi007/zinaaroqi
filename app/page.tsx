@@ -1,10 +1,11 @@
+import { listingKeywords } from "@/lib/seo/keywords";
 import type { Metadata } from "next";
 import { ListingsBrowser } from "@/components/properties/ListingsBrowser";
 
 export const metadata: Metadata = {
-  title: "Real Estate Listings for Sale & Rent",
-  description:
-    "Browse apartments, buildings, and land for sale or rent. Clear sale/rent status on every listing, with direct contact for each property.",
+  keywords: listingKeywords(),
+  title: "عقارات للبيع والإيجار في السعودية | Saudi Real Estate",
+  description: "اكتشف شققًا وفللًا وعمائر وأراضي للبيع والإيجار في المملكة العربية السعودية، مع الأسعار والمواصفات والمواقع. Browse Saudi properties for sale and rent.",
   alternates: { canonical: "/" },
 };
 

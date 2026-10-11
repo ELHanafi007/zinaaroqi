@@ -1,8 +1,9 @@
+import { configuredPublicSiteOrigin } from "@/lib/site-url";
 import type { MetadataRoute } from "next";
 import { connectToDatabase } from "@/lib/mongodb/connect";
 import { Property } from "@/models/Property";
 
-const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+const baseUrl = configuredPublicSiteOrigin() || "http://localhost:3000";
 
 // Without this, Next.js would bake the sitemap in once at build time and
 // never touch it again — a listing added or removed afterward wouldn't be

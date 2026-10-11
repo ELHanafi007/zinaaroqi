@@ -1,3 +1,4 @@
+import { listingKeywords } from "@/lib/seo/keywords";
 import { configuredPublicSiteOrigin } from "@/lib/site-url";
 import type { Metadata } from "next";
 import "./globals.css";
@@ -6,6 +7,7 @@ import { LanguageProvider } from "@/lib/i18n/LanguageProvider";
 import { AuthSessionProvider } from "@/components/auth/AuthSessionProvider";
 
 export const metadata: Metadata = {
+  keywords: listingKeywords(),
   metadataBase: new URL(configuredPublicSiteOrigin() || process.env.NEXTAUTH_URL || "http://localhost:3000"),
   title: {
     default: "41 للعقارت | Real Estate Listings",

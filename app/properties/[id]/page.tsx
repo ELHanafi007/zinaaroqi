@@ -1,6 +1,8 @@
+import { propertyKeywords } from "@/lib/seo/keywords";
 import { configuredPublicSiteOrigin } from "@/lib/site-url";
 import type { Metadata } from "next";
 import mongoose from "mongoose";
+import { notFound } from "next/navigation";
 import { cache } from "react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/authOptions";
@@ -15,6 +17,7 @@ const baseUrl = publicOrigin || process.env.NEXTAUTH_URL || "http://localhost:30
 
 const FALLBACK_METADATA: Metadata = {
   title: "Listing",
+  robots: { index: false, follow: false },
   description: "Browse builds, apartments, and land for sale or rent.",
 };
 
@@ -62,16 +65,15 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   try {
     const property = await getVisibleProperty(params.id);
-    if (!property) return FALLBACK_METADATA;
+    if (!property || property.visibility === "private") return FALLBACK_METADATA;
 
     const description =
-      property.description.length > 160
-        ? `${property.description.slice(0, 157)}...`
-        : property.description;
+      (property.description.trim() || `${property.title} — property details, price and location.`).replace(/\s+/g, " ").slice(0, 160);
     const image = property.images[0];
 
     return {
       // Root layout's title template appends "| 41 للعقارت" automatically.
+      keywords: propertyKeywords(property),
       title: property.title,
       description,
       alternates: { canonical: `/properties/${property._id}` },
@@ -96,12 +98,13 @@ export async function generateMetadata({
 }
 
 export default async function PropertyDetailsPage({ params }: { params: { id: string } }) {
-  const property = await getVisibleProperty(params.id).catch(() => null);
+  const property = await getVisibleProperty(params.id);
+  if (!property) notFound();
 
   // Structured data (schema.org) for search engines — omitted entirely for
   // a not-found/private listing, same as the metadata above, so nothing
   // about it is described in markup either.
-  const jsonLd = property
+  const jsonLd = property.visibility === "public"
     ? {
         "@context": "https://schema.org",
         "@type": "RealEstateListing",
@@ -139,10 +142,10 @@ export default async function PropertyDetailsPage({ params }: { params: { id: st
         <script
           type="application/ld+json"
           // eslint-disable-next-line react/no-danger
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
         />
       )}
-      <PropertyDetailsClient publicOrigin={publicOrigin} />
+      <PropertyDetailsClient publicOrigin={publicOrigin} initialProperty={property} />
     </>
   );
 }

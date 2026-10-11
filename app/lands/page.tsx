@@ -1,10 +1,11 @@
+import { listingKeywords } from "@/lib/seo/keywords";
 import type { Metadata } from "next";
 import { ListingsBrowser } from "@/components/properties/ListingsBrowser";
 
 export const metadata: Metadata = {
-  title: "Land for Sale",
-  description:
-    "Browse land for sale, with location and pricing clearly listed on every plot.",
+  keywords: listingKeywords("land"),
+  title: "أراضي للبيع في السعودية | Land for Sale",
+  description: "اكتشف أراضي وقطع أراضٍ للبيع في المملكة العربية السعودية، مع الأسعار والمواقع. Browse land and plots for sale in Saudi Arabia.",
   alternates: { canonical: "/lands" },
 };
 

@@ -24,14 +24,14 @@ import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { useSession } from "next-auth/react";
 import { OFFICE_PHONE_NUMBERS, officeWhatsAppLink, officeCallLink } from "@/lib/config/office";
 
-export default function PropertyDetailsClient({ publicOrigin }: { publicOrigin: string | null }) {
+export default function PropertyDetailsClient({ publicOrigin, initialProperty }: { publicOrigin: string | null; initialProperty?: PropertyDTO }) {
   const { t, locale } = useLanguage();
   const { data: session } = useSession();
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const galleryDialog = useRef<HTMLDialogElement>(null);
-  const [property, setProperty] = useState<PropertyDTO | null>(null);
-  const [status, setStatus] = useState<"loading" | "error" | "notfound" | "ready">("loading");
+  const [property, setProperty] = useState<PropertyDTO | null>(initialProperty || null);
+  const [status, setStatus] = useState<"loading" | "error" | "notfound" | "ready">(initialProperty ? "ready" : "loading");
   const [activeImage, setActiveImage] = useState(0);
   const [officeSendOpen, setOfficeSendOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -55,9 +55,10 @@ export default function PropertyDetailsClient({ publicOrigin }: { publicOrigin: 
   }
 
   useEffect(() => {
+    if (initialProperty && initialProperty._id === params.id) { setProperty(initialProperty); setStatus("ready"); setActiveImage(0); setOfficeSendOpen(false); return; }
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.id]);
+  }, [params.id, initialProperty]);
 
   async function handleDelete() {
     setDeleting(true);
