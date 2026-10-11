@@ -82,6 +82,7 @@ export const translations = {
       confirmDeleteDesc: "This action can't be undone. They will no longer be able to sign in.",
     },
     orders: {
+      copyOrder: "Copy order details",
       sendGroup: "Send to group",
       chooseGroup: "Choose a WhatsApp group",
       directHint: "Send from the office WhatsApp account to the selected group.",
@@ -489,6 +490,7 @@ export const translations = {
       confirmDeleteDesc: "لا يمكن التراجع عن هذا الإجراء. لن يتمكن هذا المستخدم من تسجيل الدخول بعد الآن.",
     },
     orders: {
+      copyOrder: "نسخ تفاصيل الطلب",
       sendGroup: "إرسال إلى مجموعة",
       chooseGroup: "اختر مجموعة واتساب",
       directHint: "إرسال من حساب واتساب المكتب إلى المجموعة المختارة.",
@@ -661,6 +663,7 @@ export const translations = {
       sendFailed: "لم يتم تأكيد الإرسال. تحقق من حساب واتساب المكتب قبل المحاولة مجددًا؛ ربما أُرسلت الرسالة بالفعل.",
       sendAccepted: "أكد OpenWA عملية الإرسال. تحقق من التسليم في واتساب.",
       privateShare: "اجعل العقار عامًا قبل إرساله للعميل.",
+      copyOrder: "نسخ تفاصيل الطلب",
       sendGroup: "إرسال إلى مجموعة",
       chooseGroup: "اختر مجموعة واتساب",
       directHint: "إرسال من حساب واتساب المكتب إلى المجموعة المختارة.",

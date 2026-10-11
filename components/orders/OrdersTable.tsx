@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { CopyButton } from "@/components/ui/CopyButton";
+import { orderWhatsAppMessage } from "@/lib/order-message";
 import { OrderWhatsAppDialog } from "./OrderWhatsAppDialog";
 import { Icon } from "@/components/ui/Icon";
 import { useState } from "react";
@@ -110,7 +112,8 @@ export function OrdersTable({
                 </td>
                 <td className="px-4 py-3 text-ink-400">{formatDate(order.updatedAt, locale)}</td>
                 <td className="px-4 py-3">
-                  <div className="flex justify-end gap-2">
+                  <div className="flex items-start justify-end gap-2">
+                    <CopyButton text={orderWhatsAppMessage(order, locale)} label={`${t("orders.copyOrder")}: ${order.customerName}`} />
                     <button type="button" onClick={() => setShareOrder(order)} className="btn-secondary px-3 py-1.5 text-xs text-moss-600" aria-label={`${t("orders.sendGroup")}: ${order.customerName}`}>
                       <Icon name="whatsapp" className="h-4 w-4" />{t("orders.sendGroup")}
                     </button>
