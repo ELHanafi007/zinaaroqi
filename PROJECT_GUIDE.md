@@ -1,10 +1,37 @@
-# 41 Real Estate — Project & API Guide
+<div align="center">
+  <img src="docs/assets/logo.png" alt="41 Real Estate logo" width="120" />
+
+  <h1>41 Real Estate</h1>
+  <p><strong>Find a place. Manage every detail.</strong></p>
+  <p>A bilingual property marketplace and office management platform.</p>
+
+  <p>
+    <a href="https://www.41real-estate.site">Live Website</a> ·
+    <a href="#local-setup">Getting Started</a> ·
+    <a href="#api-endpoints">API Reference</a> ·
+    <a href="DEPLOYMENT.md">Deployment</a>
+  </p>
+
+  <p>
+    <img alt="Next.js 14" src="https://img.shields.io/badge/Next.js-14-3f5147?style=flat-square&amp;logo=nextdotjs&amp;logoColor=white" />
+    <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-526d59?style=flat-square&amp;logo=typescript&amp;logoColor=white" />
+    <img alt="MongoDB" src="https://img.shields.io/badge/MongoDB-647c69?style=flat-square&amp;logo=mongodb&amp;logoColor=white" />
+    <img alt="Arabic and English" src="https://img.shields.io/badge/Language-AR%20%7C%20EN-7b8975?style=flat-square" />
+  </p>
+</div>
+
+![Project and API guide banner](docs/assets/project-banner.svg)
+
+# Project & API Guide
+
 
 A bilingual Arabic–English real estate platform for browsing properties and managing office operations. Built with Next.js App Router, React, TypeScript, MongoDB, and Tailwind CSS.
 
 [Live website](https://www.41real-estate.site) · [Main README](README.md) · [Deployment guide](DEPLOYMENT.md) · [WhatsApp service guide](services/openwa/README.md)
 
-## Contents
+---
+
+## 🧭 Contents
 
 - [Features](#features)
 - [Architecture](#architecture)
@@ -17,6 +44,8 @@ A bilingual Arabic–English real estate platform for browsing properties and ma
 - [Deployment](#deployment)
 
 ## Features
+
+> **One workspace for property discovery and office operations.**
 
 - Three listing categories: apartments, buildings (`build`), and land.
 - Apartment subtypes: villa, apartment, duplex, floor/story, shop, and other.
@@ -306,3 +335,12 @@ Deploy the Next.js website to Vercel or another compatible Node.js host. Configu
 Run OpenWA on a separate persistent browser host. Configure `OPENWA_API_URL` and the matching `OPENWA_API_KEY` on the website, and point `WHATSAPP_WEBHOOK_URL` on the service to the deployed website webhook. Protect remote service endpoints with authenticated HTTPS; pairing data and WhatsApp sessions must remain private.
 
 See [deployment instructions](DEPLOYMENT.md) and [OpenWA service documentation](services/openwa/README.md) for operational details. OpenWA is unofficial WhatsApp automation, and availability depends on the connected account and service.
+
+
+---
+
+<div align="center">
+  <img src="docs/assets/logo.png" alt="41 Real Estate" width="64" />
+  <p><strong>41 Real Estate</strong> · Arabic &amp; English</p>
+  <a href="#41-real-estate">Back to top ↑</a>
+</div>

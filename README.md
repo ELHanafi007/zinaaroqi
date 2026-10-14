@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/logo.png" alt="41 Real Estate logo" width="120" />
+</p>
+
 # 41 للعقارت — Real Estate Management Platform
 
 For a current project overview, setup instructions, and complete endpoint reference, see **[PROJECT_GUIDE.md](PROJECT_GUIDE.md)**.
