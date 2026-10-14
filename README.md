@@ -1,5 +1,8 @@
 # 41 للعقارت — Real Estate Management Platform
 
+For a current project overview, setup instructions, and complete endpoint reference, see **[PROJECT_GUIDE.md](PROJECT_GUIDE.md)**.
+
+
 A Next.js (App Router) + MongoDB real estate marketplace for listing and managing
 **Builds/Properties**, **Apartments**, and **Land**. Browsing listings is
 public and requires no account; managing them (the Dashboard) requires
