@@ -1,540 +1,346 @@
-<p align="center">
+<div align="center">
   <img src="docs/assets/logo.png" alt="41 Real Estate logo" width="120" />
-</p>
 
-# 41 للعقارت — Real Estate Management Platform
+  <h1>41 Real Estate</h1>
+  <p><strong>Find a place. Manage every detail.</strong></p>
+  <p>A bilingual property marketplace and office management platform.</p>
 
-For a current project overview, setup instructions, and complete endpoint reference, see **[PROJECT_GUIDE.md](PROJECT_GUIDE.md)**.
+  <p>
+    <a href="https://www.41real-estate.site">Live Website</a> ·
+    <a href="#local-setup">Getting Started</a> ·
+    <a href="#api-endpoints">API Reference</a> ·
+    <a href="DEPLOYMENT.md">Deployment</a>
+  </p>
+
+  <p>
+    <img alt="Next.js 14" src="https://img.shields.io/badge/Next.js-14-3f5147?style=flat-square&amp;logo=nextdotjs&amp;logoColor=white" />
+    <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-526d59?style=flat-square&amp;logo=typescript&amp;logoColor=white" />
+    <img alt="MongoDB" src="https://img.shields.io/badge/MongoDB-647c69?style=flat-square&amp;logo=mongodb&amp;logoColor=white" />
+    <img alt="Arabic and English" src="https://img.shields.io/badge/Language-AR%20%7C%20EN-7b8975?style=flat-square" />
+  </p>
+</div>
+
+![Project and API guide banner](docs/assets/project-banner.svg)
+
+# Project & API Guide
 
 
-A Next.js (App Router) + MongoDB real estate marketplace for listing and managing
-**Builds/Properties**, **Apartments**, and **Land**. Browsing listings is
-public and requires no account; managing them (the Dashboard) requires
-staff sign-in.
+A bilingual Arabic–English real estate platform for browsing properties and managing office operations. Built with Next.js App Router, React, TypeScript, MongoDB, and Tailwind CSS.
 
-> Setting this up locally? See **Getting started** below. Deploying it
-> somewhere real? See **[DEPLOYMENT.md](./DEPLOYMENT.md)**.
+[Live website](https://www.41real-estate.site) · [Main README](README.md) · [Deployment guide](DEPLOYMENT.md) · [WhatsApp service guide](services/openwa/README.md)
 
-## Authentication & roles
+---
 
-The Dashboard (`/dashboard/**`) is protected by NextAuth (credentials
-provider, JWT sessions) via `middleware.ts` — visiting any dashboard route
-while signed out redirects to `/login`. There's no public sign-up form by
-design; accounts are created either by an admin from **Dashboard → Users**,
-or by bootstrapping the first one from the command line (see Setup below).
+## 🧭 Contents
 
-Four roles:
+- [Features](#features)
+- [Architecture](#architecture)
+- [Local setup](#local-setup)
+- [Pages](#pages)
+- [Authentication and permissions](#authentication-and-permissions)
+- [API endpoints](#api-endpoints)
+- [Request examples](#request-examples)
+- [Validation and errors](#validation-and-errors)
+- [Deployment](#deployment)
 
-- **Real Estate Officer** — can create and edit listings (apartments, builds,
-  and land). No access to Orders.
-- **Sales Officer** — can view Orders, log new ones, and update their status.
-  No access to property listings at all.
-- **Project Manager** — same as Real Estate Officer, but scoped to **build**
-  listings only (a "build" is the multi-unit "project" type in this app —
-  see Apartment units below). Can't create or edit apartment or land
-  listings; the category field is locked to "Build" in their listing form.
-- **Admin** — everything every other role can do, plus **delete**
-  listings/orders and manage staff accounts (create, change role,
-  activate/deactivate, delete).
+## Features
 
-These rules are enforced server-side in the API routes
-(`requireListingsAccess`, `requireOrdersAccess`, and `requireAdmin` for
-deletes and user management — all in `lib/auth/requireSession.ts`) — the UI
-hiding pages/buttons a given role can't use (`lib/auth/useRequireRole.ts`)
-is a convenience for navigation, not the actual security boundary. A
-safeguard also prevents removing/demoting the last remaining active admin
-account, so you can't accidentally lock yourself out.
+> **One workspace for property discovery and office operations.**
 
-Public visitors can still browse every listing page with no login; only the
-Edit/Delete actions on a listing's detail page are hidden unless you're
-signed in (and Delete specifically only for admins). The Orders section is
-restricted to Sales Officers and Admins end-to-end, including the list/read
-endpoints, since it holds customer contact info.
+- Three listing categories: apartments, buildings (`build`), and land.
+- Apartment subtypes: villa, apartment, duplex, floor/story, shop, and other.
+- Sale/rent listings, optional prices, availability, and public/private visibility.
+- Search, category filters, price ranges, location filters, sorting, and pagination.
+- Property galleries, image previews, quick view, and copy actions.
+- Google Maps location links and a map of available properties with resolvable coordinates.
+- TikTok links and video rendering on the full property page; Quick View uses a link and copy button.
+- Building units with room details, rental status, and optional tenant records.
+- Offer attribution to a system user.
+- Customer request management, staff accounts, and role-based access.
+- Cloudinary image uploads and TikTok cover re-hosting.
+- Office WhatsApp text sharing, group selection for orders, QR pairing, and incoming TikTok-link lookup.
+- Arabic/English interfaces with RTL/LTR support, responsive navigation, and sidebar layouts.
+- Server-generated metadata, public-listing sitemap, robots rules, and structured data.
+- Manual electrical readings for building-unit meters. Cost calculations use a placeholder tariff, not a verified utility rate.
 
-Core business rule, enforced in the UI, the API, and the database layer:
+## Architecture
 
-- Builds and Apartments → **sale or rent**
-- Land → **sale only**, never rent, never a rental period
-
-Every listing also tracks an **availability status** — `available`, `sold`,
-or `rented` — settable from the edit page. `sold` only applies to sale
-listings and `rented` only to rentals; this is enforced the same way as the
-land rule (form UI, Zod schema, and a Mongoose hook), so an available sale
-listing can be marked sold, but never "rented", and vice versa.
-
-The interface is **bilingual (English / Arabic)** with full right-to-left
-layout support. A language toggle sits in the header; the choice is
-remembered in the browser (`localStorage`) and flips `<html dir>` between
-`ltr` and `rtl`.
-
-**Owner contact info and location are optional.** A listing can be created
-with just a title, category, price, and description — owner/location only
-become required internally once you start filling them in (e.g. if you type
-an owner name, a phone number is still required; you just aren't forced to
-provide owner or location info at all). Pages that display owner/location
-show a graceful fallback ("Owner not provided", "Location not specified")
-when they're missing.
-
-**A dedicated form per category, not one shared form.** Creating a listing
-starts at `/dashboard/new`, a picker with three cards — Apartment, Build,
-Land — each leading to its own route and its own form component
-(`ApartmentForm.tsx`, `BuildForm.tsx`, `LandForm.tsx`) that only shows the
-fields relevant to that category: Land's form has no rooms/bathrooms/tenant
-section at all and no rent option; Build's form replaces the top-level
-rooms/bathrooms fields with the per-apartment units editor instead (since a
-building's units are what actually have that information, not the building
-itself); Apartment's form has both property details and tenant fields
-directly. The three forms share one state/submit hook
-(`lib/forms/useListingFormState.ts`) and a set of reusable field groups in
-`components/forms/fields/` (owner, location, tenant, property details,
-images/TikTok), so the category-specific logic (what fields to render, in
-what order) lives in the three thin form components while the actual state
-management, validation-error display, and submit logic isn't duplicated
-three times. Editing a listing (`/dashboard/:id/edit`) is still one route —
-it just renders whichever of the three form components matches the
-listing's existing category.
-
-**Property details** — rooms, bathrooms, whether there's a kitchen, whether
-kitchen cabinets are installed, and who the listing is suitable for (see
-below) — can be added to any apartment listing (not land, and not at the
-top level of a build — see units, below).
-
-**Suitability / residency type.** Apartments (and each individual apartment
-inside a build) can optionally be tagged **Family**, **Singles / Bachelors**,
-or **Women only** — a common classification in this market. It's stored as
-`details.residencyType` on a standalone apartment, or per-unit on a build's
-`units[].residencyType`, and left unset (`"No restriction"` in the UI) by
-default. It's also a first-class filter on every browse page (hidden on the
-Lands page, since it doesn't apply there) — filtering matches a listing
-whose own `details.residencyType` fits, or a build with at least one
-matching unit. A small badge (`components/properties/ResidencyBadge.tsx`)
-surfaces it on listing cards and the details page whenever it's set — for a
-build, every distinct type found across its units is shown.
-
-**Build listings get a dedicated apartments form**: a "number of
-apartments" field that grows or shrinks the list, plus a card per apartment
-with its own name, number, rooms, bathrooms, kitchen, cabinets-installed,
-residency type, and electricity (meter/subscription) number. This lives in
-its own component (`components/forms/BuildUnitsForm.tsx`), used by
-`BuildForm.tsx`. Units only apply to the "build" category and are cleared
-automatically if the category is changed away from "build" via a direct
-API call.
-
-**WattVision design system + electrical monitoring (manual readings).** A
-second, deliberately separate visual identity — dark background, cyan/neon
-accents, monospaced KPI numbers — used for a real electrical-monitoring
-feature: manual meter readings logged per build unit, tied to the
-electricity number already stored on that unit. It's fully namespaced so it
-can never leak into 41 للعقارت's own light/warm theme:
-- Colors live under the `wv` key in `tailwind.config.ts` (`bg-wv-surface`,
-  `text-wv-cyan`, `border-wv-border`, etc.) — a completely separate palette
-  from `ink`/`stone`/`brass`/`moss`/`rust`.
-- The KPI/number font is JetBrains Mono, registered as its own
-  `--font-jetbrains-mono` variable and Tailwind's `font-wv-mono`, never the
-  app's default `font-display`/`font-body`.
-- Component classes (`.wv-card`, `.wv-kpi-value`, `.wv-alert`,
-  `.wv-table-row`, `.wv-live-dot`) live in `app/globals.css` alongside the
-  existing ones, but only apply inside a `<div className="wv-theme">`
-  wrapper — nothing here is global.
-- **`/dashboard/electrical`** (Admin / Real Estate Officer / Project
-  Manager) lets you pick a "meter" — any build unit that has an electricity
-  number set — log a reading (watts + kWh since the last reading), and see
-  today's/this month's kWh and Bs cost, a consumption chart, a recent
-  readings table, and two basic alert heuristics (a consumption spike vs.
-  the recent average, and sustained late-night "vampire" draw). There is
-  **no smart-meter integration** — every reading is entered by hand — and
-  the kWh→Bs conversion (`lib/electrical/tariff.ts`) uses a flat placeholder
-  rate, not a verified real utility tariff (Bolivia's actual residential
-  rate is tiered). The alert thresholds are simple starting heuristics, not
-  calibrated against real consumption data.
-
-**Tenant records for rentals.** Whenever a listing type is "rent", a Tenant
-information section (name, ID number, mobile phone) appears — for a
-standalone apartment or build, at the top of the listing; for a build split
-into individual apartments, per apartment instead, since each unit inside a
-building can have its own tenant. Like the other business rules, this is
-enforced end-to-end: if a listing (or a unit) is ever switched back to
-"sale," any tenant data attached to it is cleared automatically rather than
-left stale, both when saving the document directly and on any
-`findOneAndUpdate`-based write. Tenant ID numbers and phone numbers are
-personal data — treat exports/backups of this database accordingly.
-
-**Public / private listings.** Every listing form has a Visibility field —
-**Public** (the default, shown to anyone browsing the site) or **Private**
-(only visible to signed-in staff). This is enforced server-side, not just
-hidden in the UI: the public listings API forces `visibility: public` for
-any request without a session — a signed-out visitor can't request private
-listings even by editing the query string — and fetching a private
-listing's detail page directly returns the same "not found" response a
-signed-out visitor would get for a wrong ID, so a private listing's very
-existence isn't detectable from outside. Staff can flip a listing's
-visibility from the dashboard table (a quick dropdown, same pattern as the
-order-status dropdown) or from its edit form. A small "Private" badge shows
-on the listing's detail page, but only to signed-in staff — a private
-listing is otherwise indistinguishable from one that doesn't exist, for
-anyone who isn't signed in.
-
-**Owner (and tenant) contact info is staff-only.** A signed-out visitor
-never sees a listing's real owner name/phone/email, or a rented unit's
-tenant name/ID number/phone — those fields are real personal data and now
-only render when `useSession()` resolves to a signed-in user. In their
-place, a signed-out visitor sees a "Contact our office" card instead, with
-the numbers in `lib/config/office.ts` and one-tap WhatsApp / Call buttons
-for each. Update that file directly to change the office numbers — there's
-no settings UI for it, since it's a small, rarely-changed list. Property
-cards also stop showing an owner's name in the browse grid once signed out,
-for the same reason.
-
-The same staff-only treatment applies to **"Suitable for" (residency
-type)** and a build unit's **electricity number** — both are hidden from
-signed-out visitors everywhere they'd otherwise appear (badges, the detail
-page, per-unit rows, and the "Suitable for" browse filter itself), and the
-API won't apply a `residencyType` filter for a signed-out request either.
-Staff still see and manage all of this as normal once signed in.
-
-**WhatsApp link previews.** Sharing a listing's URL — including the
-one-tap WhatsApp button on the office contact card — now shows a rich
-preview (cover photo, title, description) directly in the chat, without
-the recipient opening the link. That requires real Open Graph metadata
-generated server-side per listing, which is why
-`app/properties/[id]/page.tsx` is a thin server component exporting
-`generateMetadata()`, wrapping `PropertyDetailsClient.tsx` (which still
-holds all the actual interactive page logic, unchanged). The metadata
-generator respects the same privacy rule as everything else here: a
-private listing with no signed-in session gets generic fallback metadata,
-so its title/photo never leak through a shared link preview either.
-
-**Image uploads (Cloudinary).** The listing form's Images section has an
-"Upload from device" button alongside the existing "paste a URL" option —
-it uploads directly to Cloudinary (`app/api/uploads/route.ts`) and adds the
-returned hosted URL to the listing, the same way a pasted URL or a fetched
-TikTok cover would. Restricted to the same roles that can manage listings,
-capped at 8MB, and limited to JPG/PNG/WEBP/GIF. If `CLOUDINARY_URL` isn't
-configured, the button shows a clear setup error instead of failing
-silently — pasting an external URL still works regardless, since that path
-never touches Cloudinary.
-
-**TikTok video link.** Add a listing's TikTok video URL and click "Fetch
-cover" to pull the video's official cover thumbnail via TikTok's public
-oEmbed endpoint (no scraping). TikTok's own thumbnail link is a signed,
-time-limited CDN URL that goes dead after a few days if stored as-is, so
-the server hands that URL to Cloudinary (`app/api/tiktok/oembed/route.ts`),
-which fetches and re-hosts the image on its own permanent URL — that's what
-actually gets saved to the listing, so it never expires. (An earlier version
-of this fix embedded the image directly as a base64 `data:` URI instead of
-using Cloudinary; that worked but bloated the MongoDB document per cover
-photo — Cloudinary is the better fix now that uploads are wired up.) Only
-callable by the same roles that can manage listings, since it triggers a
-real Cloudinary upload. If a listing saved before either fix shows a broken
-cover image, just open it for editing and click "Fetch cover" again to
-replace the dead link.
-
-**Orders (front-desk requests).** When a customer visits the office looking
-for a property, log the request under Dashboard → Orders: customer name,
-phone number, what they want (apartment / build / land, with an optional
-sale-or-rent preference), and free-form notes. This is a separate resource
-from listings — a lightweight request log, not tied to any specific
-property — with its own status you can update inline from the table
-(Pending → Contacted → Fulfilled, or Cancelled) as staff follow up.
-
-**Sidebar navigation.** Browsing is split into dedicated pages — All
-listings, Apartments, Builds/Properties, and Lands — plus a Dashboard link,
-in a persistent sidebar (a slide-over drawer on mobile, toggled from the
-header). The category pages reuse the same filter/search/sort UI as the
-main browse page, just with the category locked instead of duplicating the
-page three times.
-
-## Tech stack
-
-- Next.js 14 (App Router) + TypeScript
-- MongoDB via Mongoose
-- Zod for server-side request validation
-- Tailwind CSS
-
-## Architecture overview
-
-```
-app/
-  page.tsx                     Public browse page — all listings (search/filter/sort)
-  apartments/page.tsx          Apartments only (category locked)
-  builds/page.tsx              Builds/Properties only (category locked)
-  lands/page.tsx                Lands only (category locked)
-  properties/[id]/page.tsx     Server component — generates per-listing Open
-                                Graph metadata, renders PropertyDetailsClient
-  properties/[id]/PropertyDetailsClient.tsx  All the actual interactive
-                                page logic (badges, gallery, contact card)
-  login/page.tsx               Staff sign-in page
-  dashboard/page.tsx           Admin-style dashboard (stats + table)
-  dashboard/new/page.tsx       Category picker (Apartment / Build / Land cards)
-  dashboard/new/apartment/page.tsx  Create an apartment listing
-  dashboard/new/build/page.tsx      Create a build listing
-  dashboard/new/land/page.tsx       Create a land listing
-  dashboard/[id]/edit/page.tsx Edit listing — renders the matching one of the
-                               three form components based on its category
-  dashboard/orders/page.tsx    Orders list (front-desk customer requests)
-  dashboard/orders/new/page.tsx        Log a new order
-  dashboard/orders/[id]/edit/page.tsx  Edit an order / change its status
-  dashboard/users/page.tsx     Staff account management — admin only
-  api/properties/route.ts      GET (list, filter, search, sort, stats) / POST (create)
-  api/properties/[id]/route.ts GET / PUT / DELETE by id
-  api/orders/route.ts          GET (list, filter, search, stats) / POST (create)
-  api/orders/[id]/route.ts     GET / PUT / DELETE by id
-  api/users/route.ts           GET (list) / POST (create) — admin only
-  api/users/[id]/route.ts      PUT / DELETE — admin only
-  api/auth/[...nextauth]/route.ts  NextAuth handler
-
-middleware.ts  Redirects signed-out visitors away from /dashboard/** to /login
-
-components/
-  properties/   PropertyCard, CategoryBadge, ListingTypeBadge, FilterBar,
-                ListingsBrowser (shared browse/filter/grid used by all 4 browse pages)
-  dashboard/    DashboardStats, ListingsTable
-  orders/       OrderForm, OrdersTable (inline status dropdown), OrdersStats
-  forms/        ApartmentForm, BuildForm, LandForm — three dedicated,
-                category-specific listing forms (see below), plus
-                BuildUnitsForm (the apartments-within-a-build editor, used
-                only by BuildForm)
-  forms/fields/ OwnerFields, LocationFields, TenantFields,
-                PropertyDetailsFields, ImagesAndVideoFields — shared field
-                groups reused across all three listing forms
-  ui/           AppShell (sidebar + mobile drawer + header layout), Sidebar,
-                SiteHeader, LoadingState, EmptyState, ErrorState, ConfirmDialog
-  auth/         AuthSessionProvider (wraps the app in NextAuth's SessionProvider)
-
+```text
+app/                       Next.js pages and API route handlers
+  api/                     HTTP endpoints
+  dashboard/               Staff workflows
+  properties/[id]/         Property detail page and metadata
+components/                Forms, listing cards, maps, dialogs, and UI
 lib/
-  forms/useListingFormState.ts  Shared state/validation-error/submit hook
-                                 behind all three category-specific forms
-  mongodb/connect.ts   Cached Mongoose connection (safe for dev hot-reload)
-  mongodb/serialize.ts Mongoose doc -> plain JSON DTO (properties)
-  mongodb/serializeOrder.ts  Mongoose doc -> plain JSON DTO (orders)
-  mongodb/serializeUser.ts   Mongoose doc -> plain JSON DTO (users; never includes passwordHash)
-  validations/property.ts  Zod schema, enforces land = sale-only
-  validations/order.ts     Zod schema for order requests
-  validations/user.ts      Zod schema for creating/updating staff accounts
-  auth/authOptions.ts  NextAuth config: credentials provider, JWT session, role on the token
-  auth/requireSession.ts  requireSession() / requireAdmin() guards used by API routes
-  api-client.ts        Typed fetch wrapper used by client components
-  format.ts            Price/date/location formatting helpers, locale-aware
-  i18n/translations.ts English + Arabic dictionaries
-  i18n/LanguageProvider.tsx  React context: current locale, dir, t() helper
-
-models/Property.ts  Mongoose schema + pre-save/pre-update hooks that force
-                     land listings to sale-only, apartment units to
-                     build-only, and status to match listing type — all at
-                     the database layer, so the rules can't be bypassed even
-                     by a direct API call.
-models/Order.ts      Mongoose schema for front-desk customer requests
-models/User.ts       Mongoose schema for staff/admin accounts (bcrypt password hash)
-
-types/property.ts   Shared TypeScript types/DTOs (listings)
-types/order.ts       Shared TypeScript types/DTOs (orders)
-types/user.ts        Shared TypeScript types/DTOs (users)
-types/electrical.ts  Shared TypeScript types/DTOs (electrical readings, meters)
-types/next-auth.d.ts Module augmentation so session.user.id/role are typed
-scripts/seed.ts        Optional sample-data seeder
-scripts/create-admin.ts  Bootstraps (or resets) the first admin account
-
-models/ElectricalReading.ts  Mongoose schema for manually-logged meter readings
-lib/electrical/tariff.ts     Placeholder kWh→Bs conversion rate — swap in a real tariff
-lib/config/office.ts         Office phone numbers shown to signed-out visitors,
-                              plus WhatsApp/tel: link helpers
-lib/validations/electrical.ts  Zod schema for logging a reading
-
-app/api/tiktok/oembed/route.ts  Fetches a TikTok video's official cover
-                                 thumbnail and re-hosts it on Cloudinary
-app/api/uploads/route.ts        Uploads an image file to Cloudinary
+  auth/                    NextAuth configuration and permission guards
+  validations/             Zod request schemas
+  mongodb/                 Database connection and DTO serialization
+  i18n/                    Arabic/English translations and language context
+  seo/                     Search metadata helpers
+models/                    Mongoose models
+services/openwa/           Separate persistent WhatsApp browser service
+scripts/                   Admin bootstrap, sample data, and service startup
+tests/                     Regression tests
+public/                    Static assets and HTML design prototypes
 ```
 
-**Design decisions:**
+The website handles validation, sessions, database operations, and user interfaces. Cloudinary hosts uploaded images. OpenWA runs independently and forwards incoming WhatsApp messages to the website webhook.
 
-- The land/sale-only rule is enforced in three independent layers (form UI,
-  Zod schema on the API, and a Mongoose pre-hook on both `save` and
-  `findOneAndUpdate`), so it can't be bypassed by a raw API request.
-- No auth: owner info is just a plain sub-document on each listing, as
-  requested. This keeps the schema simple to extend later with real user
-  accounts if needed.
-- The dashboard and public browse page share the same `FilterBar`,
-  `PropertyCard`/`ListingsTable`, and `/api/properties` endpoint, so
-  filtering/search/sort logic isn't duplicated.
-- Mongoose connections are cached on `global` to avoid exhausting MongoDB
-  connections during Next.js dev hot-reloads and serverless cold starts.
+## Local setup
 
-## Getting started
-
-### 1. Install dependencies
+Install dependencies:
 
 ```bash
 npm install
 ```
 
-### 2. Configure your database
+Create `.env.local` with your own values:
 
-Copy the example env file:
-
-```bash
-cp .env.local.example .env.local
-```
-
-Open `.env.local` and replace `<db_password>` with your actual MongoDB Atlas
-database user password:
-
-```
-MONGODB_URI=mongodb+srv://41forrealestat_db_user:<db_password>@cluster0.uoihwgh.mongodb.net/realestate?appName=Cluster0
-```
-
-A few notes on this connection string:
-
-- `41forrealestat_db_user` is the database username — make sure this user
-  exists under Atlas → Database Access, with a password you know.
-- `<db_password>` must be URL-encoded if it contains special characters
-  (e.g. `@` becomes `%40`).
-- `/realestate` right after the host sets the database name Mongo will use;
-  change it if you'd prefer a different name.
-- In Atlas → Network Access, make sure your current IP (or `0.0.0.0/0` for
-  quick local testing) is allowed to connect.
-
-### 3. Configure authentication
-
-Still in `.env.local`, set:
-
-```
-NEXTAUTH_SECRET=<a long random string>
+```dotenv
+MONGODB_URI=mongodb+srv://USERNAME:PASSWORD@CLUSTER/realestate
+NEXTAUTH_SECRET=REPLACE_WITH_A_RANDOM_SECRET
 NEXTAUTH_URL=http://localhost:3000
+SITE_URL=https://your-public-domain.example
+# Optional: image uploads and TikTok covers
+CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME
 ```
 
-Generate a secret with `openssl rand -base64 32` (or any random 32+ character
-string). Update `NEXTAUTH_URL` to your real domain when you deploy.
+`SITE_URL` must be a public origin for shared property URLs. Use your deployed domain; localhost links cannot be opened by external recipients. Never commit credentials, `.env.local`, or WhatsApp session files.
 
-### 4. Create your first admin account
-
-There's no public sign-up form, so bootstrap one from the command line:
+Generate an authentication secret:
 
 ```bash
-npm run create-admin -- --name "Jane Doe" --email jane@example.com --password "at-least-8-characters"
+openssl rand -base64 32
 ```
 
-Running this again with the same email updates that person's name/password
-and ensures they're an active admin — handy if you ever get locked out.
-Once you have one admin, you can create Real Estate Officer, Sales Officer,
-or Project Manager accounts from **Dashboard → Users** instead.
-
-> **Upgrading from an earlier version of this project:** the role system
-> used to have a single generic "staff" role. That value has been replaced
-> by the three specific roles above — any account still stored with the old
-> role won't match a recognized permission and will effectively have no
-> dashboard access until an admin reassigns it a new role from
-> **Dashboard → Users**.
-
-### 5. Configure image uploads (Cloudinary)
-
-Add to `.env.local`:
-
-```
-CLOUDINARY_URL=cloudinary://<api_key>:<api_secret>@<cloud_name>
-```
-
-Get this from your [Cloudinary dashboard](https://cloudinary.com/console) →
-API Keys → "API Environment variable" (it gives you the whole string
-pre-formatted). This is a secret — never commit it, and treat it like a
-password. Without it, the "Upload from device" button on the listing form
-will show a clear error instead of silently failing; pasting an external
-image URL still works either way, since that doesn't touch Cloudinary at
-all.
-
-### 6. (Optional) Seed sample data
+Bootstrap the first admin with your own account details:
 
 ```bash
-npm run seed
+npm run create-admin -- --name "Admin" --email "admin@example.com" --password "REPLACE_WITH_A_STRONG_PASSWORD"
 ```
 
-Inserts a handful of sample builds, apartments, and land listings so you
-have something to browse immediately — **but only if the `properties`
-collection is currently empty.** If it already has listings in it (real
-data, or anything you don't want touched), the command refuses to run and
-exits with an explanation instead of silently deleting anything.
-
-```bash
-npm run seed -- --force   # ⚠️ DESTRUCTIVE: deletes every existing listing, then seeds
-npm run seed -- --keep    # Adds the sample listings alongside what's already there
-```
-
-**Only ever use `--force` against a database you're fine emptying out.**
-There's no undo — MongoDB Atlas's free (M0) tier has no backups or
-point-in-time recovery, so a deleted listing on that tier is gone for good.
-
-### 7. Run the app
+Run the website:
 
 ```bash
 npm run dev
 ```
 
-Visit:
-
-- `http://localhost:3000` — public browse page (no login needed)
-- `http://localhost:3000/login` — staff sign-in
-- `http://localhost:3000/dashboard` — admin dashboard (redirects to `/login` if signed out)
-
-### 8. Build for production
+For WhatsApp, run these commands in a separate terminal:
 
 ```bash
+npm run openwa:setup
+npm run openwa
+```
+
+Setup generates missing `OPENWA_API_URL` and `OPENWA_API_KEY` settings in `.env.local`. Sign in as admin at `/dashboard/whatsapp` and pair the office account. `npm run openwa:start` is an alias; `npm run dev` starts only the website.
+
+Optional WhatsApp settings:
+
+```dotenv
+WHATSAPP_WEBHOOK_URL=http://127.0.0.1:3000/api/webhooks/whatsapp
+WHATSAPP_REPLY_LOCALE=ar
+```
+
+Use `en` for English automatic replies. Saved titles and descriptions are not automatically translated.
+
+Production and code checks:
+
+```bash
+npm run lint
+npx tsc --noEmit
 npm run build
 npm run start
 ```
 
-This runs a production build locally. To actually deploy it somewhere
-(Vercel, a VPS, etc.) — provisioning production MongoDB/Cloudinary
-credentials, environment variables, bootstrapping the first admin account
-against a real database, custom domains, and a post-deploy checklist —
-see **[DEPLOYMENT.md](./DEPLOYMENT.md)**.
+`npm run seed` adds samples only when the properties collection is empty. See the existing README before using any seed override options.
 
-## API reference
+## Pages
 
-| Method | Route                    | Description                                  |
-|--------|---------------------------|----------------------------------------------|
-| GET    | `/api/properties`         | List, with `?search=&category=&listingType=&residencyType=&sortBy=&sortDir=&page=&limit=`, plus summary `stats`. Signed-out requests are always forced to `visibility=public`; signed-in staff can additionally pass `?visibility=public\|private` |
-| POST   | `/api/properties`         | Create a listing (validated with Zod)        |
-| GET    | `/api/properties/:id`     | Get one listing                              |
-| PUT    | `/api/properties/:id`     | Update a listing (validated with Zod)        |
-| DELETE | `/api/properties/:id`     | Delete a listing                             |
-| GET    | `/api/orders`              | List orders, with `?search=&status=&category=&page=&limit=`, plus summary `stats` |
-| POST   | `/api/orders`              | Log a new order (validated with Zod)         |
-| GET    | `/api/orders/:id`          | Get one order                                |
-| PUT    | `/api/orders/:id`          | Update an order (e.g. change its status)     |
-| DELETE | `/api/orders/:id`          | Delete an order                              |
-| POST   | `/api/auth/[...nextauth]`  | NextAuth sign-in/sign-out/session endpoints (handled by the library) |
-| POST   | `/api/uploads`             | Upload an image to Cloudinary, returns its hosted URL — Listings roles only |
-| GET    | `/api/tiktok/oembed`       | Fetch a TikTok video's cover and re-host it on Cloudinary — Listings roles only |
-| GET    | `/api/electrical-readings/meters` | List build units with an electricity number set — Listings roles only |
-| GET    | `/api/electrical-readings` | Readings + stats + alerts for `?electricityNumber=` — Listings roles only |
-| POST   | `/api/electrical-readings` | Log a manual reading (watts + kWh) — Listings roles only |
-| GET    | `/api/users`                | List staff/admin accounts — **admin only**   |
-| POST   | `/api/users`                | Create a staff/admin account — **admin only** |
-| PUT    | `/api/users/:id`            | Update name/role/active/password — **admin only** |
-| DELETE | `/api/users/:id`            | Delete a user — **admin only**, blocked for your own account and for the last remaining admin |
+Public pages:
 
-All property/order write endpoints require a signed-in session (`401` if
-not); deletes additionally require the admin role (`403` otherwise).
+- `/` — all property listings.
+- `/apartments`, `/builds`, `/lands` — category browsing.
+- `/properties/:id` — property details.
+- `/login` — staff sign-in.
+- `/sitemap.xml` — public property URLs, regenerated hourly.
+- `/robots.txt` — crawler rules and sitemap location.
 
-All write endpoints return `400` with a `fieldErrors` map on validation
-failure (including if a request tries to set `category: "land"` with
-`listingType: "rent"`), and `404` if the id doesn't exist.
+Staff pages:
 
-## Notes
+- `/dashboard` — listing management.
+- `/dashboard/new` — category picker.
+- `/dashboard/new/apartment`, `/dashboard/new/build`, `/dashboard/new/land` — create listings.
+- `/dashboard/:id/edit` — edit a listing.
+- `/dashboard/orders`, `/dashboard/orders/new`, `/dashboard/orders/:id/edit` — customer requests.
+- `/dashboard/users` — account management.
+- `/dashboard/whatsapp` — connection status and QR pairing.
+- `/dashboard/electrical` — manual meter readings.
 
-- **Language:** all UI copy lives in `lib/i18n/translations.ts` as flat
-  dictionaries keyed by dot-path (e.g. `form.titleLabel`). To add more text,
-  add the key to both the `en` and `ar` objects and call
-  `t("your.new.key")` from any client component via `useLanguage()`. To add
-  a third language, add another top-level key (e.g. `fr`) to `translations`
-  and extend the `Locale` type — the toggle button in `SiteHeader` currently
-  assumes two languages, so you'd want to swap it for a small `<select>`.
-- Images are stored as plain URLs (add them in the listing form) rather than
-  file uploads, to keep the stack simple — swap in an upload provider (S3,
-  Cloudinary, etc.) later without touching the schema shape.
-- There's no authentication by design, per the project brief. If you add
-  accounts later, `owner` on each listing is a natural place to link a
-  `userId`.
+## Authentication and permissions
 
-### Phone number login
+The application uses NextAuth credentials authentication and JWT sessions. Staff sign in with email or an assigned phone number and password. There is no public registration endpoint.
 
-Users can sign in with their email or assigned phone number and existing password. Admins can add a phone when creating a user, or edit the phone in the Users table (saved when the field loses focus). Phone numbers are optional and unique. Saudi mobile numbers such as `05xxxxxxxx` and `+9665xxxxxxxx` match the same account; other countries require an international number with country code. This uses password authentication, not SMS codes. Existing accounts keep email login until a phone is assigned.
+Endpoint access labels used below:
+
+- **Public:** no session required; signed-out property reads are restricted to public listings.
+- **Listings:** `admin`, `real_estate_officer`, or `project_manager`. Project managers are restricted to buildings on property create/update/share operations.
+- **Orders:** `admin` or `sales_officer`.
+- **Admin:** `admin` only.
+- **Webhook key:** `X-API-Key` matching the configured `OPENWA_API_KEY`.
+
+Protected browser requests use the NextAuth session cookie, not a custom bearer token. Authorization is enforced by API handlers. Owner/tenant information is displayed to signed-in staff in the UI; do not treat UI visibility alone as a guarantee of API field redaction.
+
+## API endpoints
+
+All paths below are relative to the website origin. JSON writes use `Content-Type: application/json` unless noted otherwise. `:id` is a MongoDB document ID.
+
+### Properties
+
+- **`GET /api/properties` — Public.** Returns `{ data, total, stats }`. Supports:
+  - `category`: `apartment`, `build`, or `land`.
+  - `listingType`: `sale` or `rent`.
+  - `status`: `available`, `sold`, or `rented`.
+  - `search`: title or address search.
+  - `location`: city, district, or address text.
+  - `propertyType`: `villa`, `apartment`, `duplex`, `floor`, `shop`, or `other`.
+  - `rooms`: minimum top-level room count.
+  - `minPrice`, `maxPrice`: numeric price bounds.
+  - `residencyType`: `family`, `singles`, or `women_only`; applied only for signed-in requests.
+  - `visibility`: `public` or `private`; signed-out requests always use public visibility.
+  - `sortBy`: `createdAt` (default), `updatedAt`, `price`, or `title`.
+  - `sortDir`: `asc` or `desc` (default).
+  - `page`: starts at 1; `limit`: default 24, maximum 100.
+  Property-type, room, and residency filters are skipped when category is explicitly `land`. Summary stats are calculated across accessible listings, independently of search filters.
+- **`POST /api/properties` — Listings.** Create a validated property.
+- **`GET /api/properties/:id` — Public.** Read a property; private listings require a session.
+- **`PUT /api/properties/:id` — Listings.** Save a complete validated listing payload; this is not a general partial PATCH endpoint.
+- **`DELETE /api/properties/:id` — Admin.** Delete a property.
+- **`POST /api/properties/:id/whatsapp` — Listings.** Send a public property as a text message. Body: `{ "phone": "+966500000000", "locale": "en" }`. Requires a same-origin `Origin` header and configured OpenWA/public site URL. Private listings cannot be shared through this endpoint.
+
+Property input supports `title`, `category`, `listingType`, `description`, optional `price`, `rentalPeriod`, `status`, `visibility`, `propertyType`, `broughtByUserId`, `owner`, `location`, `details`, `tenant`, `units`, `images`, and `tiktokUrl`. See [the property schema](lib/validations/property.ts) for nested fields and limits.
+
+### Customer requests / orders
+
+- **`GET /api/orders` — Orders.** List requests with `search`, `status`, `category`, `page`, and `limit` (default 50, maximum 100), plus summary stats.
+- **`POST /api/orders` — Orders.** Create a customer request.
+- **`GET /api/orders/:id` — Orders.** Read a request.
+- **`PUT /api/orders/:id` — Orders.** Update a request, including its status.
+- **`DELETE /api/orders/:id` — Admin.** Delete a request.
+- **`POST /api/orders/:id/whatsapp` — Orders.** Send the saved request to a selected office WhatsApp group. Body: `{ "groupId": "123456789-123456789@g.us", "locale": "ar" }`. Requires a same-origin `Origin` header; the group must appear in the office account's group list.
+
+Order fields: `customerName`, `customerPhone`, `requestedCategory`, optional `requestedListingType`, optional `notes`, and `status` (`pending`, `contacted`, `fulfilled`, or `cancelled`).
+
+### Staff accounts and authentication
+
+- **`GET /api/users` — Admin.** List staff accounts.
+- **`POST /api/users` — Admin.** Create an account.
+- **`PUT /api/users/:id` — Admin.** Update account details, role, active status, or password.
+- **`DELETE /api/users/:id` — Admin.** Delete an account; safeguards protect self-deletion and the last active admin.
+- **`GET /api/users/options` — Listings.** Retrieve active user choices for offer attribution.
+- **`GET/POST /api/auth/[...nextauth]` — NextAuth-managed.** Authentication routes, including session and CSRF handling. Use NextAuth client helpers for sign-in/sign-out rather than manually constructing credential requests.
+
+### Images, TikTok, and location
+
+- **`POST /api/uploads` — Listings.** Multipart form with a `file` field. Accepts JPEG, PNG, WEBP, or GIF up to 8 MB. Requires Cloudinary; returns `{ "data": { "url": "https://..." } }` on success.
+- **`GET /api/tiktok/oembed?url=...` — Listings.** Fetch TikTok cover metadata and re-host the cover on Cloudinary. Requires Cloudinary.
+- **`GET /api/maps/resolve?url=...` — Public.** Resolve a supported Google Maps URL into `{ "embedUrl": "..." }`. Invalid URLs return 400; unresolved locations return 422.
+
+### WhatsApp connection and webhook
+
+- **`GET /api/whatsapp/connection` — Admin.** Returns `{ status, qr }`, where `qr` is a data URL or null. Covers setup, offline, waiting, pairing, connected, and service issue states. A 200 response alone does not mean the account is connected.
+- **`GET /api/whatsapp/groups` — Orders.** Returns available groups in `{ data }`; service failures return 502, missing setup returns 503.
+- **`POST /api/webhooks/whatsapp` — Webhook key.** Receives `{ messageId, from, text, fromMe }`. Processes incoming private messages containing TikTok links, looks up public properties, and replies with property details. Own messages, group messages, invalid senders, and messages without TikTok links are ignored. Message IDs prevent duplicate sends. Unknown links receive no reply.
+
+WhatsApp sharing uses free-mode text messages with links, without images or paid interactive buttons. An unconfirmed send must be checked in the office account before retrying to avoid duplicate messages.
+
+### Electrical readings
+
+- **`GET /api/electrical-readings/meters` — Listings.** List building units with electricity numbers.
+- **`GET /api/electrical-readings?electricityNumber=...` — Listings.** Return readings, stats, and alerts. Optional `limit`: default 50, maximum 200.
+- **`POST /api/electrical-readings` — Listings.** Body: `electricityNumber`, non-negative `watts`, non-negative `kwh`, and optional ISO datetime `recordedAt`.
+
+This feature records manual readings; it does not connect to smart meters.
+
+## Request examples
+
+Public property search:
+
+```bash
+curl 'http://localhost:3000/api/properties?category=apartment&status=available&minPrice=1000&sortBy=price&sortDir=asc&page=1&limit=12'
+```
+
+Example listing body for `POST /api/properties` (requires an authorized session):
+
+```json
+{
+  "title": "Apartment for rent in Riyadh",
+  "category": "apartment",
+  "propertyType": "apartment",
+  "listingType": "rent",
+  "rentalPeriod": "monthly",
+  "description": "A spacious apartment with a fitted kitchen and installed air conditioning.",
+  "price": 3500,
+  "status": "available",
+  "visibility": "public",
+  "location": { "city": "Riyadh", "district": "Example district" },
+  "details": { "rooms": 3, "bathrooms": 2, "hasKitchen": true, "acInstalled": true },
+  "images": [],
+  "units": []
+}
+```
+
+Example order body for `POST /api/orders`:
+
+```json
+{
+  "customerName": "Example Customer",
+  "customerPhone": "+966500000000",
+  "requestedCategory": "apartment",
+  "requestedListingType": "rent",
+  "notes": "Looking for a three-room apartment.",
+  "status": "pending"
+}
+```
+
+Example incoming webhook payload (server-to-server, authenticated with `X-API-Key`):
+
+```json
+{
+  "messageId": "unique-provider-message-id",
+  "from": "966500000000@c.us",
+  "text": "https://www.tiktok.com/@example/video/1234567890123456789",
+  "fromMe": false
+}
+```
+
+The examples use fictional data. Sending the webhook can produce an actual WhatsApp reply if a matching public listing exists.
+
+## Validation and errors
+
+- Land listings are sale-only and cannot have a rental period.
+- Rentals require `monthly` or `yearly`; sale listings cannot have a rental period.
+- `sold` applies to sale listings; `rented` applies to rentals.
+- Only buildings can contain `units` (maximum 200).
+- Price is optional, but must be positive when provided.
+- Owner is optional; when included, name and phone are required.
+- Common error statuses: 400 invalid input, 401 unauthenticated, 403 forbidden, 404 missing resource, 422 unresolved map, 500 server error, 502 upstream/send failure, and 503 missing integration setup.
+- Validation failures commonly return `{ error, fieldErrors }`. Integration handlers may return `{ code }`; response formats are endpoint-specific.
+
+The implementation is the source of truth: [API handlers](app/api), [validation schemas](lib/validations), and [authorization guards](lib/auth/requireSession.ts).
+
+## Deployment
+
+Deploy the Next.js website to Vercel or another compatible Node.js host. Configure MongoDB, authentication, Cloudinary, and the public `SITE_URL` in the deployment environment.
+
+Run OpenWA on a separate persistent browser host. Configure `OPENWA_API_URL` and the matching `OPENWA_API_KEY` on the website, and point `WHATSAPP_WEBHOOK_URL` on the service to the deployed website webhook. Protect remote service endpoints with authenticated HTTPS; pairing data and WhatsApp sessions must remain private.
+
+See [deployment instructions](DEPLOYMENT.md) and [OpenWA service documentation](services/openwa/README.md) for operational details. OpenWA is unofficial WhatsApp automation, and availability depends on the connected account and service.
+
+
+---
+
+<div align="center">
+  <img src="docs/assets/logo.png" alt="41 Real Estate" width="64" />
+  <p><strong>41 Real Estate</strong> · Arabic &amp; English</p>
+  <a href="#41-real-estate">Back to top ↑</a>
+</div>
