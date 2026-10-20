@@ -1,3 +1,4 @@
+import { resolvedWhatsAppConfig } from "@/lib/whatsapp-settings";
 import { timingSafeEqual } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import mongoose from 'mongoose';
@@ -5,12 +6,12 @@ import { connectToDatabase } from '@/lib/mongodb/connect';
 import { Property } from '@/models/Property';
 import { serializeProperty } from '@/lib/mongodb/serialize';
 import { extractTikTokUrl, resolveTikTokUrl, sameTikTokVideo } from '@/lib/tiktok-lookup';
-import { openwaConfig, sendPropertyOpenwa } from '@/lib/openwa';
+import { sendPropertyOpenwa } from '@/lib/openwa';
 import { configuredPublicSiteOrigin } from '@/lib/site-url';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 export async function POST(req: NextRequest) {
-  const config = openwaConfig();
+  const config = await resolvedWhatsAppConfig();
   const supplied = Buffer.from(req.headers.get('X-API-Key') || '');
   const expected = Buffer.from(config?.key || '');
   if (!expected.length || supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
   if (fromMe === true || typeof from !== 'string' || !/^\d+@(c\.us|s\.whatsapp\.net|lid)$/.test(from) || typeof text !== 'string' || typeof messageId !== 'string' || !messageId || messageId.length > 300 || text.length > 20000) return NextResponse.json({ ignored: true });
   const url = extractTikTokUrl(text);
   if (!url) return NextResponse.json({ ignored: true });
-  const origin = configuredPublicSiteOrigin();
+  const origin = config && "siteUrl" in config ? config.siteUrl : configuredPublicSiteOrigin();
   if (!origin) return NextResponse.json({ error: 'Site URL missing' }, { status: 503 });
   try {
     await connectToDatabase();
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
     const listings = await Property.find({ visibility: 'public', tiktokUrl: { $exists: true, $ne: '' } });
     const match = listings.find(property => sameTikTokVideo(property.tiktokUrl || '', url) || (resolved && sameTikTokVideo(property.tiktokUrl || '', resolved)));
     if (!match) { await claims.updateOne({ _id: messageId as never }, { $set: { status: 'not_found' } }); return NextResponse.json({ matched: false }); }
-    const locale = process.env.WHATSAPP_REPLY_LOCALE === 'en' ? 'en' : 'ar';
+    const locale = 'replyLocale' in config! ? config.replyLocale : process.env.WHATSAPP_REPLY_LOCALE === 'en' ? 'en' : 'ar';
     try {
       await sendPropertyOpenwa(config!, from, serializeProperty(match), origin, locale);
       await claims.updateOne({ _id: messageId as never }, { $set: { status: 'sent' } });

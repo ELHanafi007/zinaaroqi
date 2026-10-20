@@ -333,3 +333,15 @@ body {
 .haven-card-footer bdi { color: #3f5147; font-size: 23px; font-weight: 500; }
 .haven-quick-view { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex-shrink: 0; min-height: 40px; padding: 10px 12px; border: 1px solid #cbd7c7; border-radius: 25px; background: #edf1e8; color: #526d59; font-size: 11px; }
 .haven-quick-view:hover { background: #e2eadb; }
+
+/* Contextual property editing: visible affordances for pointer and keyboard. */
+.inline-edit-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  transition: background-color 160ms ease, box-shadow 160ms ease;
+  cursor: pointer;
+}
+.inline-edit-trigger > svg { color: #647c69; flex-shrink: 0; }
+.inline-edit-trigger:hover { background-color: #e9eee4; }
+.inline-edit-trigger:focus-visible { outline: 2px solid #526d59; outline-offset: 3px; }

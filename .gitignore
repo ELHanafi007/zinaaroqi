@@ -38,3 +38,8 @@ next-env.d.ts
 # OpenWA authenticated browser sessions
 _IGNORE_*/
 /services/openwa/node_modules/
+
+# Private configuration and generated deployment files
+.env
+/.next-backup-*/
+/whatsapp-service.zip

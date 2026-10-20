@@ -1,5 +1,6 @@
 "use client";
 
+import { WhatsAppSettings } from "./WhatsAppSettings";
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
@@ -29,6 +30,7 @@ export function WhatsAppConnection() {
   return <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
     <h1 className="font-display text-3xl font-semibold text-ink-800">{t("whatsappConnection.title")}</h1>
     <p className="mt-2 text-ink-500">{t("whatsappConnection.description")}</p>
+    <WhatsAppSettings onSaved={() => setRefresh(value => value + 1)} />
     <div className="mt-6 rounded-2xl border border-stone-200 bg-white p-6">
       <p role="status" className="font-semibold text-ink-800">{t(`whatsappConnection.${connection.status}`)}</p>
       {connection.status === "pairing" && connection.qr && <>

@@ -9,6 +9,7 @@ import { CopyButton } from "@/components/ui/CopyButton";
 import { Icon } from "@/components/ui/Icon";
 import { PriceDisplay } from "@/components/properties/PriceDisplay";
 import { WhatsAppSendForm } from "@/components/properties/WhatsAppSendForm";
+import { PropertyQuickEdit, type QuickEditField } from "@/components/properties/PropertyQuickEdit";
 import { TikTokVideo } from "@/components/properties/TikTokVideo";
 import { LocationMap } from "@/components/properties/LocationMap";
 import { CategoryBadge } from "@/components/properties/CategoryBadge";
@@ -34,6 +35,7 @@ export default function PropertyDetailsClient({ publicOrigin, initialProperty }:
   const [status, setStatus] = useState<"loading" | "error" | "notfound" | "ready">(initialProperty ? "ready" : "loading");
   const [activeImage, setActiveImage] = useState(0);
   const [officeSendOpen, setOfficeSendOpen] = useState(false);
+  const [quickEditField, setQuickEditField] = useState<QuickEditField | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -114,6 +116,8 @@ export default function PropertyDetailsClient({ publicOrigin, initialProperty }:
       details.kitchenCabinetsInstalled != null ||
       details.residencyType != null);
   const units = property.units ?? [];
+  const canQuickEdit = Boolean(session?.user && ["admin", "real_estate_officer", "project_manager"].includes(session.user.role) && (session.user.role !== "project_manager" || property.category === "build"));
+  const editLabel = (field: QuickEditField) => ({ price: locale === "ar" ? "تعديل السعر" : "Edit price", status: locale === "ar" ? "تعديل الحالة" : "Edit availability", tiktokUrl: locale === "ar" ? "تعديل رابط TikTok" : "Edit TikTok link", mapUrl: locale === "ar" ? "تعديل الموقع" : "Edit location" })[field];
   const canSendFromOffice = Boolean(session?.user && ["admin", "real_estate_officer", "project_manager"].includes(session.user.role) &&
     (session.user.role !== "project_manager" || property.category === "build") && property.visibility === "public");
 
@@ -172,7 +176,7 @@ export default function PropertyDetailsClient({ publicOrigin, initialProperty }:
           <div className="flex flex-wrap items-center gap-2">
             <CategoryBadge category={property.category} propertyType={property.propertyType} />
             <ListingTypeBadge listingType={property.listingType} />
-            <StatusBadge status={property.status} />
+            {canQuickEdit ? <button type="button" className="inline-edit-trigger rounded-full" aria-label={editLabel("status")} title={editLabel("status")} onClick={() => setQuickEditField("status")}><StatusBadge status={property.status} /><Icon name="edit" className="h-3 w-3" /></button> : <StatusBadge status={property.status} />}
             {session?.user && property.details?.residencyType && (
               <ResidencyBadge residencyType={property.details.residencyType} />
             )}
@@ -185,7 +189,7 @@ export default function PropertyDetailsClient({ publicOrigin, initialProperty }:
           <h1 className="editorial-title">
             {property.title}
           </h1>
-          <p className="mt-3 flex items-center gap-2 text-sm text-ink-500"><Icon name="location" className="h-4 w-4" />{locationUrl && !property.location?.city && !property.location?.district ? t("form.locationSection") : formatLocation(property.location, t)}</p>
+          <div className="mt-3 flex items-center gap-2 text-sm text-ink-500"><Icon name="location" className="h-4 w-4" />{canQuickEdit ? <button type="button" className="inline-edit-trigger rounded-lg px-2 py-1" aria-label={editLabel("mapUrl")} onClick={() => setQuickEditField("mapUrl")}>{locationUrl && !property.location?.city && !property.location?.district ? t("form.locationSection") : formatLocation(property.location, t)}<Icon name="edit" className="h-3 w-3" /></button> : <span>{locationUrl && !property.location?.city && !property.location?.district ? t("form.locationSection") : formatLocation(property.location, t)}</span>}</div>
         </div>
         <div className="mt-6 flex flex-wrap gap-2" role="group" aria-label={t("property.actions")}>
           {locationUrl && <a href={locationUrl} target="_blank" rel="noopener noreferrer" className="property-icon-action" data-tooltip={t("property.openLocation")} aria-label={t("property.openLocation")}><Icon name="location" /></a>}
@@ -193,6 +197,7 @@ export default function PropertyDetailsClient({ publicOrigin, initialProperty }:
             <button type="button" className="property-icon-action" disabled data-tooltip={t("property.shareNeedsPublicUrl")} aria-label={t("property.shareWhatsApp")}><Icon name="share" /></button>}
           {property.tiktokUrl && <a href={property.tiktokUrl} target="_blank" rel="noopener noreferrer" className="property-icon-action" data-tooltip={t("property.watchOnTikTok")} aria-label={t("property.watchOnTikTok")}><Icon name="tiktok" /></a>}
           {canSendFromOffice && <button type="button" className="property-icon-action property-icon-whatsapp" data-tooltip={t("property.sendViaOffice")} aria-label={t("property.sendViaOffice")} aria-expanded={officeSendOpen} aria-controls="whatsapp-send-panel" onClick={() => setOfficeSendOpen(!officeSendOpen)}><Icon name="whatsapp" /></button>}
+          {quickEditField && <PropertyQuickEdit key={quickEditField} field={quickEditField} property={property} onClose={() => setQuickEditField(null)} onSaved={updated => { setProperty(updated); router.refresh(); }} />}
           {session?.user && <>
             <Link href={`/dashboard/${property._id}/edit`} className="property-icon-action" data-tooltip={t("common.edit")} aria-label={t("common.edit")}><Icon name="edit" /></Link>
             {session.user.role === "admin" && <button type="button" className="property-icon-action property-icon-delete" data-tooltip={t("common.delete")} aria-label={t("common.delete")} onClick={() => setConfirmOpen(true)}><Icon name="trash" /></button>}
@@ -210,7 +215,7 @@ export default function PropertyDetailsClient({ publicOrigin, initialProperty }:
 
         <aside className="editorial-contact">
           <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-ink-500"><Icon name="money" className="h-4 w-4 text-moss-500" />{t("property.price")}</p>
-          <div className="mt-3"><PriceDisplay price={property.price} listingType={property.listingType} rentalPeriod={property.rentalPeriod} large /></div>
+          <div className="mt-3">{canQuickEdit ? <button type="button" className="inline-edit-trigger rounded-xl p-2 -ms-2 text-start" aria-label={editLabel("price")} title={editLabel("price")} onClick={() => setQuickEditField("price")}><PriceDisplay price={property.price} listingType={property.listingType} rentalPeriod={property.rentalPeriod} large /><Icon name="edit" className="h-4 w-4" /></button> : <PriceDisplay price={property.price} listingType={property.listingType} rentalPeriod={property.rentalPeriod} large />}</div>
 
           <div className="mt-5 border-t border-ink-100 pt-5">
             {session?.user ? (
@@ -497,9 +502,9 @@ export default function PropertyDetailsClient({ publicOrigin, initialProperty }:
             </>
           )}</div>
         <div className="editorial-location">
-          {locationUrl && <div className="mb-3 flex items-center justify-between gap-3"><h2 className="editorial-section-title"><Icon name="location" className="h-5 w-5" />{t("form.locationSection")}</h2><CopyButton label={t("property.copyLocation")} text={locationUrl} /></div>}
-
-          {locationUrl && <LocationMap url={locationUrl} />}
+          {(locationUrl || canQuickEdit) && <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><h2 className="editorial-section-title"><Icon name="location" className="h-5 w-5" />{t("form.locationSection")}</h2><div className="flex items-center gap-2">{canQuickEdit && <button type="button" onClick={() => setQuickEditField("mapUrl")} className="inline-edit-trigger rounded-lg border border-ink-100 px-3 py-2 text-sm"><Icon name="edit" className="h-4 w-4" />{locationUrl ? editLabel("mapUrl") : locale === "ar" ? "إضافة الموقع" : "Add location"}</button>}{locationUrl && <CopyButton label={t("property.copyLocation")} text={locationUrl} />}</div></div>}
+          {locationUrl ? <LocationMap url={locationUrl} /> : canQuickEdit && <button type="button" onClick={() => setQuickEditField("mapUrl")} className="flex min-h-40 w-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-ink-200 bg-stone-50 p-6 text-sm text-ink-500 hover:bg-stone-100 focus-visible:outline focus-visible:outline-2"><Icon name="location" className="h-7 w-7" />{locale === "ar" ? "لم يُضف موقع بعد. اضغط لإضافة رابط خرائط Google." : "No location added yet. Click to add a Google Maps link."}</button>}
+          {canQuickEdit && <button type="button" onClick={() => setQuickEditField("tiktokUrl")} className="inline-edit-trigger mt-5 rounded-xl border border-ink-100 px-4 py-3 text-sm"><Icon name="tiktok" className="h-4 w-4" />{property.tiktokUrl ? editLabel("tiktokUrl") : locale === "ar" ? "إضافة رابط TikTok" : "Add TikTok link"}<Icon name="edit" className="h-3 w-3" /></button>}
           {property.tiktokUrl && <div className="mt-5"><TikTokVideo url={property.tiktokUrl} /></div>}
           {property.tiktokUrl && <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ink-100 bg-white p-4">
             <a href={property.tiktokUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-medium text-ink-600 hover:underline"><Icon name="tiktok" className="h-5 w-5" />{t("property.watchOnTikTok")}</a>

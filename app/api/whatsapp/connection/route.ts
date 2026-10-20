@@ -1,7 +1,7 @@
+import { resolvedWhatsAppConfig } from "@/lib/whatsapp-settings";
 import { NextResponse } from "next/server";
 import QRCode from "qrcode";
 import { requireAdmin } from "@/lib/auth/requireSession";
-import { openwaConfig } from "@/lib/openwa";
 import { openwaPairingStatus, openwaAccountAvailable } from "@/lib/openwa-status";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +10,7 @@ const headers = { "Cache-Control": "no-store, private", "Vary": "Cookie" };
 export async function GET() {
   const { response } = await requireAdmin();
   if (response) return response;
-  const config = openwaConfig();
+  const config = await resolvedWhatsAppConfig();
   if (!config) return NextResponse.json({ status: "setup", qr: null }, { headers });
   try {
     // Access this endpoint over a private network or an authenticated gateway.

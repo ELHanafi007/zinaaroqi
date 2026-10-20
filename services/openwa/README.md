@@ -1,5 +1,7 @@
 # OpenWA free mode
 
+For a standalone server installation, upload this folder and follow **[DEPLOY.md](DEPLOY.md)**. Configure the website connection in **Dashboard → WhatsApp → WhatsApp server settings**.
+
 The app uses `POST /api/messages/sendText` to send the saved public listing title, category, listing type, availability, formatted price, room details, full description, property URL, Google Maps URL and TikTok video link. Arabic/English labels are chosen before sending; saved titles/descriptions are not automatically translated. Images are excluded from WhatsApp messages. It does not use paid interactive buttons. Owner and tenant details are excluded. The service config ignores license keys so an invalid paid key cannot block free startup.
 
 ## Local setup

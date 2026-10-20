@@ -172,3 +172,32 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     return NextResponse.json({ error: "Failed to delete listing." }, { status: 500 });
   }
 }
+
+// Targeted quick edits preserve all unrelated listing fields.
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+  const { session, response } = await requireListingsAccess();
+  if (response) return response;
+  if (req.headers.get("origin") !== req.nextUrl.origin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!isValidId(params.id)) return NextResponse.json({ error: "Invalid listing id." }, { status: 400 });
+  try {
+    const json = await req.json();
+    // Reuse the field validators without requiring a complete listing payload.
+    const parsed = (await import("@/lib/validations/quick-property")).quickPropertySchema.safeParse(json);
+    if (!parsed.success) return NextResponse.json({ error: "Validation failed.", fieldErrors: flattenZodErrors(parsed.error) }, { status: 400 });
+    await connectToDatabase();
+    const doc = await Property.findById(params.id);
+    if (!doc) return NextResponse.json({ error: "Listing not found." }, { status: 404 });
+    if (isBuildOnlyRole(session!.user.role) && doc.category !== "build") return NextResponse.json({ error: "Project managers can only manage build listings." }, { status: 403 });
+    const data = parsed.data;
+    if ((data.status === "sold" && doc.listingType !== "sale") || (data.status === "rented" && doc.listingType !== "rent")) return NextResponse.json({ error: "Availability must match the listing type." }, { status: 400 });
+    const set: Record<string, unknown> = {};
+    const unset: Record<string, string> = {};
+    if ("price" in data) { if (data.price === null) unset.price = ""; else set.price = data.price; }
+    if (data.status) set.status = data.status;
+    if ("tiktokUrl" in data) { if (data.tiktokUrl) set.tiktokUrl = data.tiktokUrl; else unset.tiktokUrl = ""; }
+    if ("mapUrl" in data) { if (data.mapUrl) set["location.mapUrl"] = data.mapUrl; else unset["location.mapUrl"] = ""; }
+    const updated = await Property.findOneAndUpdate({ _id: params.id, listingType: doc.listingType, category: doc.category }, { $set: set, $unset: unset }, { new: true, runValidators: true });
+    if (!updated) return NextResponse.json({ error: "Listing changed. Refresh and try again." }, { status: 409 });
+    return NextResponse.json({ data: serializeProperty(updated) });
+  } catch { return NextResponse.json({ error: "Failed to update listing." }, { status: 500 }); }
+}

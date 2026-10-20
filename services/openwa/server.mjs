@@ -12,6 +12,10 @@ else args.push('--port', String(upstreamPort));
 let runtime;
 const webhookStatus = { enabled: false, received: 0, forwarded: 0, ignored: 0, lastResult: null };
 const gateway = http.createServer(async (request, response) => {
+  // Protect every route, including health/QR data, before proxying upstream.
+  if (!process.env.OPENWA_API_KEY || request.headers['x-api-key'] !== process.env.OPENWA_API_KEY) {
+    response.writeHead(401, { 'Content-Type': 'application/json' }); response.end('{"error":"Unauthorized"}'); return;
+  }
   if (request.url?.split('?')[0] === '/office/webhook-status') {
     response.setHeader('Content-Type', 'application/json');
     response.setHeader('Cache-Control', 'no-store');

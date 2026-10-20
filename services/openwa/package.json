@@ -9,5 +9,12 @@
     "effect": "4.0.0-beta.100",
     "@effect/platform-node": "4.0.0-beta.100",
     "@effect/platform-node-shared": "4.0.0-beta.100"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env start.mjs",
+    "check": "node --check server.mjs && node --check start.mjs"
+  },
+  "engines": {
+    "node": ">=22.22.2 <23"
   }
 }

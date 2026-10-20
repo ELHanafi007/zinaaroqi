@@ -8,5 +8,8 @@ export default {
   apiKey: process.env.OPENWA_API_KEY,
   // Free mode: do not apply paid or invalid license material.
   qrLogSkip: true,
-  userDataDir: process.env.WA_USER_DATA_DIR || "./_IGNORE_property-office",
+  // Pairing through the admin page may happen long after service startup.
+  qrTimeout: 0,
+  authTimeout: 0,
+  userDataDir: process.env.WA_USER_DATA_DIR || "./_IGNORE_property-office-user",
 };

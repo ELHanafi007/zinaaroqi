@@ -1,3 +1,4 @@
+import { resolvedWhatsAppConfig } from "@/lib/whatsapp-settings";
 import { whatsappRecipient } from "@/lib/property-share";
 import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
@@ -6,7 +7,7 @@ import { connectToDatabase } from "@/lib/mongodb/connect";
 import { Property } from "@/models/Property";
 import { serializeProperty } from "@/lib/mongodb/serialize";
 import { configuredPublicSiteOrigin } from "@/lib/site-url";
-import { openwaConfig, sendPropertyOpenwa, OpenwaSendError } from "@/lib/openwa";
+import { sendPropertyOpenwa, OpenwaSendError } from "@/lib/openwa";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -15,8 +16,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const { session, response } = await requireListingsAccess();
   if (response) return response;
   if (req.headers.get("origin") !== req.nextUrl.origin) return NextResponse.json({ error: "Forbidden", code: "sendFailed" }, { status: 403 });
-  const config = openwaConfig();
-  const origin = configuredPublicSiteOrigin();
+  const config = await resolvedWhatsAppConfig();
+  const origin = config && "siteUrl" in config ? config.siteUrl : configuredPublicSiteOrigin();
   if (!config || !origin) return NextResponse.json({ code: "openwaSetup" }, { status: 503 });
   if (!mongoose.Types.ObjectId.isValid(params.id)) return NextResponse.json({ code: "sendFailed" }, { status: 400 });
   let body;
