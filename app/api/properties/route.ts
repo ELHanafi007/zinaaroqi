@@ -46,8 +46,13 @@ export async function GET(req: NextRequest) {
     }
     // Legal registration is a sale/land concern. Ignore this parameter for
     // rentals and unrelated categories instead of producing misleading matches.
-    if (legalStatus && ["mohafada", "non_mohafada"].includes(legalStatus) && listingType !== "rent" && category === "land") {
+    if (legalStatus && ["mohafada", "non_mohafada"].includes(legalStatus) && listingType !== "rent" && (!category || category === "land")) {
       filter.legalStatus = legalStatus;
+      // A legal-status search is inherently a sale-land search. This keeps the
+      // filter useful when the user starts from “all categories” and prevents
+      // unrelated buildings/apartments from being returned.
+      if (!category) filter.category = "land";
+      if (!listingType) filter.listingType = "sale";
     }
     if (status && ["available", "sold", "rented"].includes(status)) {
       filter.status = status;

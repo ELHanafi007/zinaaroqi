@@ -37,7 +37,9 @@ export function FilterBar({
   hideResidencyType?: boolean;
 }) {
   const { t, locale } = useLanguage();
-  const legalStatusRelevant = value.category === "land" && value.listingType !== "rent";
+  // Keep the control visible for “all categories” so users can discover it;
+  // selecting a legal status automatically scopes results to sale land in the API.
+  const legalStatusRelevant = value.category === "" || (value.category === "land" && value.listingType !== "rent");
 
   return (
     <div className="courtyard-filters">
@@ -125,8 +127,8 @@ export function FilterBar({
       <details className="courtyard-filter-advanced"><summary><Icon name="filter" className="h-4 w-4" />{t("courtyard.moreFilters")}</summary><div className="courtyard-filter-options">
       {legalStatusRelevant && (
         <label className="min-w-0">
-          <span className="label-field">{t("offer.legalStatus")}</span>
-          <select className="input-field" value={value.legalStatus} onChange={e => onChange({ ...value, legalStatus: e.target.value as FilterState["legalStatus"] })} aria-label={t("offer.legalStatus")}>
+          <span className="label-field">{t("filters.legalStatusLabel")}</span>
+          <select className="input-field" value={value.legalStatus} onChange={e => onChange({ ...value, legalStatus: e.target.value as FilterState["legalStatus"] })} aria-label={t("filters.legalStatusLabel")}>
             <option value="">{locale === "ar" ? "الكل" : "All"}</option>
             <option value="mohafada">{t("offer.legalStatuses.mohafada")}</option>
             <option value="non_mohafada">{t("offer.legalStatuses.non_mohafada")}</option>
@@ -164,9 +166,9 @@ export function FilterBar({
       </div></details>
 
       </div>
-      {(value.propertyType || value.minPrice || value.maxPrice || value.rooms || value.location || value.search || (!hideCategory && value.category) || value.listingType || value.legalStatus || value.status || (!hideResidencyType && value.residencyType) || value.sortBy !== "createdAt" || value.sortDir !== "desc") && (
+      {(value.propertyType || value.minPrice || value.maxPrice || value.minArea || value.maxArea || value.rooms || value.location || value.bloc || value.number || value.search || (!hideCategory && value.category) || value.listingType || value.legalStatus || value.status || (!hideResidencyType && value.residencyType) || value.sortBy !== "createdAt" || value.sortDir !== "desc") && (
         <div className="courtyard-filter-reset">
-          <button type="button" className="text-sm font-semibold text-moss-600 underline-offset-4 hover:underline" onClick={() => onChange({ search: "", category: hideCategory ? value.category : "", listingType: "", legalStatus: "", status: "", residencyType: "", sortBy: "createdAt", sortDir: "desc" })}>
+          <button type="button" className="text-sm font-semibold text-moss-600 underline-offset-4 hover:underline" onClick={() => onChange({ search: "", category: hideCategory ? value.category : "", listingType: "", legalStatus: "", status: "", residencyType: "", propertyType: "", minPrice: "", maxPrice: "", minArea: "", maxArea: "", rooms: "", location: "", bloc: "", number: "", sortBy: "createdAt", sortDir: "desc" })}>
             {t("filters.reset")}
           </button>
         </div>
