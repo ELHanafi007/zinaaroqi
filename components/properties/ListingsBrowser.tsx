@@ -13,6 +13,7 @@ import { fetchProperties } from "@/lib/api-client";
 import type { Category, PropertyDTO } from "@/types/property";
 import type { UserRole } from "@/types/user";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
+import Image from "next/image";
 
 const LISTINGS_ROLES: UserRole[] = ["admin", "real_estate_officer", "project_manager"];
 
@@ -86,7 +87,7 @@ export function ListingsBrowser({
           {t(titleKey)}
         </h1>
         <p className="courtyard-description">{t(subtitleKey)}</p><a href="#properties-map" className="courtyard-map-link">{t("courtyard.mapLink")} ↓</a></div>
-        <div className="courtyard-hero-art" aria-hidden="true"><svg viewBox="0 0 500 320"><rect width="500" height="320" fill="#dee4d4"/><circle cx="396" cy="53" r="30" fill="#f2eccd"/><path d="M0 234 170 200 500 244v90H0Z" fill="#c1cbb5"/><path d="M103 219V103l111-42 173 55v154l-173-27Z" fill="#ebe9dc"/><path d="M214 61v182l173 27V116Z" fill="#cfdbc9"/><path d="M140 119v60l40-12V107ZM250 125v67l40 10v-68ZM322 148v66l39 11v-66Z" fill="#7f9680"/><path d="M132 219v-17l55-13v43ZM267 256v-36l47 11v38Z" fill="#a5b69d"/><path d="M0 278 215 241 500 289" stroke="#f0eedf" strokeWidth="20" fill="none"/></svg><span><Icon name={fixedCategory === "land" ? "land" : fixedCategory === "build" ? "building" : "home"} className="h-5 w-5" />{t("courtyard.snapshot")}</span></div>
+        <div className="courtyard-hero-art" aria-hidden="true"><Image src="/sunlit-coastal-desert-villa.png" alt="" fill priority sizes="(max-width: 760px) 100vw, 42vw" className="object-cover object-[58%_center]" /><span><Icon name={fixedCategory === "land" ? "land" : fixedCategory === "build" ? "building" : "home"} className="h-5 w-5" />{t("courtyard.snapshot")}</span></div>
       </div>
 
       <div className="mb-8">
