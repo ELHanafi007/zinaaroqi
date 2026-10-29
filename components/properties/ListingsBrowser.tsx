@@ -87,7 +87,7 @@ export function ListingsBrowser({
           {t(titleKey)}
         </h1>
         <p className="courtyard-description">{t(subtitleKey)}</p><a href="#properties-map" className="courtyard-map-link">{t("courtyard.mapLink")} ↓</a></div>
-        <div className="courtyard-hero-art" aria-hidden="true"><Image src="/sunlit-coastal-desert-villa.png" alt="" fill priority sizes="(max-width: 760px) 100vw, 42vw" className="object-cover object-[58%_center]" /><span><Icon name={fixedCategory === "land" ? "land" : fixedCategory === "build" ? "building" : "home"} className="h-5 w-5" />{t("courtyard.snapshot")}</span></div>
+        <div className="courtyard-hero-art" aria-hidden="true"><Image src="/sunlit-coastal-desert-villa.png" alt="" fill priority unoptimized sizes="(max-width: 760px) 100vw, 42vw" className="object-cover object-[58%_center]" /><span><Icon name={fixedCategory === "land" ? "land" : fixedCategory === "build" ? "building" : "home"} className="h-5 w-5" />{t("courtyard.snapshot")}</span></div>
       </div>
 
       <div className="mb-8">
