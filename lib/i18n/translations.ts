@@ -140,9 +140,9 @@ export const translations = {
     },
     browse: {
       eyebrow: "Listings",
-      title: "Find a build, apartment, or plot of land",
+      title: "Find a place that feels like home",
       subtitle:
-        "Every listing is clearly marked for sale or for rent. Land is always sale-only.",
+        "Explore trusted homes, buildings, and land across Laâyoune — with clear prices, precise locations, and direct contact.",
       resultsCount_one: "{count} listing",
       resultsCount_other: "{count} listings",
       emptyTitle: "No listings match your filters",
@@ -570,8 +570,8 @@ export const translations = {
     },
     browse: {
       eyebrow: "العقارات",
-      title: "ابحث عن مبنى أو شقة أو قطعة أرض",
-      subtitle: "كل عقار موضح بوضوح إن كان للبيع أو للإيجار. الأراضي دائمًا للبيع فقط.",
+      title: "اعثر على العقار المناسب لك",
+      subtitle: "اكتشف شققًا ومبانٍ وأراضي في العيون، مع أسعار واضحة ومواقع دقيقة وتواصل مباشر.",
       resultsCount_one: "{count} عقار",
       resultsCount_other: "{count} عقار",
       emptyTitle: "لا توجد عقارات مطابقة لبحثك",
@@ -998,8 +998,8 @@ export const translations = {
     },
     browse: {
       eyebrow: "Biens",
-      title: "Cherchez un immeuble, un appartement ou un terrain",
-      subtitle: "Chaque bien est clairement indiqué comme à vendre ou à louer. Les terrains sont toujours uniquement à la vente.",
+      title: "Trouvez le bien qui vous ressemble",
+      subtitle: "Découvrez des appartements, des immeubles et des terrains à Laâyoune, avec des prix clairs, des emplacements précis et un contact direct.",
       resultsCount_one: "{count} bien",
       resultsCount_other: "{count} biens",
       emptyTitle: "Aucun bien ne correspond à votre recherche",
