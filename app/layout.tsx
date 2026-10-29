@@ -5,7 +5,6 @@ import "./globals.css";
 import { AppShell } from "@/components/ui/AppShell";
 import { LanguageProvider } from "@/lib/i18n/LanguageProvider";
 import { AuthSessionProvider } from "@/components/auth/AuthSessionProvider";
-import { MoroccoSplash } from "@/components/ui/MoroccoSplash";
 
 export const metadata: Metadata = {
   keywords: listingKeywords(),
@@ -37,7 +36,6 @@ export default function RootLayout({
   return (
     <html lang="en" dir="ltr" suppressHydrationWarning>
       <body className="font-body antialiased">
-        <MoroccoSplash />
         <AuthSessionProvider>
           <LanguageProvider>
             <AppShell>{children}</AppShell>
