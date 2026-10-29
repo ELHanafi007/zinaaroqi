@@ -42,6 +42,14 @@ export function OfferFields({ form, update, errors, existingUser }: {
       {errors.propertyType && <p className="field-error">{errors.propertyType}</p>}
     </div>
     <div>
+      <label className="label-field" htmlFor="legalStatus">{t("offer.legalStatus")}</label>
+      <select id="legalStatus" className="input-field" value={form.legalStatus} onChange={event => update("legalStatus", event.target.value as ListingFormState["legalStatus"])}>
+        <option value="">{t("offer.legalStatuses.unknown")}</option>
+        <option value="mohafada">{t("offer.legalStatuses.mohafada")}</option>
+        <option value="non_mohafada">{t("offer.legalStatuses.non_mohafada")}</option>
+      </select>
+    </div>
+    <div>
       <label className="label-field" htmlFor="broughtByUserId">{t("offer.broughtBy")}</label>
       <select id="broughtByUserId" className="input-field" value={form.broughtByUserId} disabled={loading || failed} onChange={event => update("broughtByUserId", event.target.value)}>
         <option value="">{t("offer.selectUser")}</option>

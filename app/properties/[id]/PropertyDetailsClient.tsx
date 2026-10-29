@@ -207,7 +207,9 @@ export default function PropertyDetailsClient({ publicOrigin, initialProperty }:
 
           <dl className="editorial-facts">
             <div><dt><Icon name={property.category === "build" ? "building" : property.category === "land" ? "land" : "home"} className="h-5 w-5" />{property.category === "apartment" ? t("offer.propertyType") : t("property.category")}</dt><dd>{property.propertyType ? t(`offer.types.${property.propertyType}`) : t(`badges.category.${property.category}`)}</dd></div>
+            {property.listingType === "sale" && property.category === "land" && property.legalStatus && <div><dt><Icon name="clipboard" className="h-5 w-5" />{t("offer.legalStatus")}</dt><dd>{t(`offer.legalStatuses.${property.legalStatus}`)}</dd></div>}
             <div><dt><Icon name="check" className="h-5 w-5" />{t("property.availability")}</dt><dd>{t(`badges.status.${property.status}`)}</dd></div>
+            {details?.area != null && <div><dt><span className="text-base">📐</span>{t("form.area")}</dt><dd>{details.area} m²</dd></div>}
             {property.category !== "land" && details?.rooms != null && <div><dt><Icon name="bed" className="h-5 w-5" />{t("property.rooms")}</dt><dd>{details.rooms}</dd></div>}
             {property.category !== "land" && details?.bathrooms != null && <div><dt><Icon name="bath" className="h-5 w-5" />{t("property.bathrooms")}</dt><dd>{details.bathrooms}</dd></div>}
             {property.category === "build" && units.length > 0 && <div><dt><Icon name="building" className="h-5 w-5" />{t("property.unitsSection")}</dt><dd>{units.length}</dd></div>}
@@ -233,7 +235,33 @@ export default function PropertyDetailsClient({ publicOrigin, initialProperty }:
                     )}
                   </>
                 ) : (
-                  <p className="mt-2 text-sm text-ink-400">{t("property.ownerNotProvided")}</p>
+                  <div className="mt-3 rounded-2xl border border-[#cce9d5] bg-[#f0fbf3] p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="flex items-center gap-2 text-sm font-semibold text-[#176b3a]">
+                          <Icon name="whatsapp" className="h-5 w-5" />
+                          {locale === "ar" ? "تواصل معنا عبر واتساب" : "Contact us on WhatsApp"}
+                        </p>
+                        <p className="mt-1 text-xs leading-5 text-[#4b755b]">
+                          {locale === "ar" ? "اسأل عن هذا العقار مباشرة عبر واتساب." : "Ask about this property directly on WhatsApp."}
+                        </p>
+                      </div>
+                      <CopyButton label={locale === "ar" ? "نسخ الرقم" : "Copy number"} text={OFFICE_PHONE_NUMBERS[0]} />
+                    </div>
+                    <div className="mt-3 rounded-xl border border-[#d8efdf] bg-white px-3 py-2.5">
+                      <span className="text-sm font-semibold tracking-wide text-[#214b31]" dir="ltr">{OFFICE_PHONE_NUMBERS[0]}</span>
+                      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <a href={officeCallLink(OFFICE_PHONE_NUMBERS[0])} className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#cfe0d4] bg-white px-3 py-2.5 text-xs font-semibold text-[#214b31] transition hover:border-[#218c4b] hover:bg-[#f4fbf5]">
+                          <Icon name="phone" className="h-4 w-4" />
+                          {locale === "ar" ? "اتصل بنا" : "Call us"}
+                        </a>
+                        <a href={officeWhatsAppLink(OFFICE_PHONE_NUMBERS[0], shareMessage)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#218c4b] px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-[#176b3a]">
+                          <Icon name="whatsapp" className="h-4 w-4" />
+                          {locale === "ar" ? "تواصل عبر واتساب" : "WhatsApp us"}
+                        </a>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </>
             ) : (

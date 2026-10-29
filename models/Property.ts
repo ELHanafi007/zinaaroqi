@@ -1,7 +1,8 @@
 import mongoose, { Schema, type HydratedDocument, Model } from "mongoose";
-import type { Category, ListingType, RentalPeriod, ListingStatus, Visibility, ResidencyType } from "@/types/property";
+import type { Category, ListingType, RentalPeriod, ListingStatus, Visibility, ResidencyType, LegalStatus } from "@/types/property";
 
 export interface PropertyDetails {
+  area?: number;
   rooms?: number;
   bathrooms?: number;
   hasKitchen?: boolean;
@@ -33,6 +34,7 @@ export interface PropertyDocument {
   title: string;
   category: Category;
   propertyType?: "villa" | "apartment" | "duplex" | "floor" | "shop" | "other";
+  legalStatus?: LegalStatus;
   broughtBy?: { userId: string; name: string };
 
   listingType: ListingType;
@@ -52,6 +54,8 @@ export interface PropertyDocument {
     city?: string;
     mapUrl?: string;
     district?: string;
+    bloc?: string;
+    number?: string;
   };
   details?: PropertyDetails;
   tenant?: Tenant;
@@ -78,12 +82,15 @@ const LocationSchema = new Schema(
     city: { type: String, trim: true },
     mapUrl: { type: String, trim: true },
     district: { type: String, trim: true },
+    bloc: { type: String, trim: true },
+    number: { type: String, trim: true },
   },
   { _id: false }
 );
 
 const DetailsSchema = new Schema(
   {
+    area: { type: Number, min: 0 },
     rooms: { type: Number, min: 0 },
     bathrooms: { type: Number, min: 0 },
     hasKitchen: { type: Boolean },
@@ -123,6 +130,7 @@ const PropertySchema = new Schema<PropertyDocument>(
   {
     title: { type: String, required: true, trim: true, maxlength: 160 },
     propertyType: { type: String, enum: ["villa", "apartment", "duplex", "floor", "shop", "other"] },
+    legalStatus: { type: String, enum: ["mohafada", "non_mohafada"] },
     broughtBy: { userId: { type: String }, name: { type: String } },
     category: {
       type: String,

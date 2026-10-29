@@ -33,7 +33,7 @@ export function ListingsTable({
   const [deleting, setDeleting] = useState(false);
 
   const [selected, setSelected] = useState<string[]>([]);
-  const [language, setLanguage] = useState<"ar" | "en">(locale);
+  const [language, setLanguage] = useState<"ar" | "en">(locale === "ar" ? "ar" : "en");
   const [showImages, setShowImages] = useState(true);
   const [shareImages, setShareImages] = useState(false);
   useEffect(() => {
@@ -64,6 +64,7 @@ export function ListingsTable({
       await updateProperty(p._id, {
         title: p.title,
         propertyType: p.propertyType,
+        legalStatus: p.legalStatus,
         broughtByUserId: p.broughtBy?.userId,
         category: p.category,
         listingType: p.listingType,
@@ -150,6 +151,9 @@ export function ListingsTable({
                 </td>
                 <td className="px-4 py-3">
                   <CategoryBadge category={p.category} propertyType={p.propertyType} />
+                  {p.category === "land" && p.listingType === "sale" && p.legalStatus && <span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${p.legalStatus === "mohafada" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+                    {locale === "ar" ? (p.legalStatus === "mohafada" ? "محفظة" : "غير محفظة") : (p.legalStatus === "mohafada" ? "Registered" : "Not registered")}
+                  </span>}
                 </td>
                 <td className="px-4 py-3">
                   <ListingTypeBadge listingType={p.listingType} size="sm" />

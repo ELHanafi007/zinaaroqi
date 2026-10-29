@@ -10,7 +10,7 @@ import { whatsappRecipient } from "@/lib/property-share";
 
 export function WhatsAppSendForm({ property, publicOrigin, onClose }: { property: PropertyDTO; publicOrigin: string; onClose: () => void }) {
   const { t, locale } = useLanguage();
-  const [messageLocale, setMessageLocale] = useState<"en" | "ar">(locale);
+  const [messageLocale, setMessageLocale] = useState<"en" | "ar">(locale === "ar" ? "ar" : "en");
   const message = propertyTextMessage(property, publicOrigin, messageLocale);
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);

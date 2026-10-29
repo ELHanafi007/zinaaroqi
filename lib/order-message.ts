@@ -1,7 +1,7 @@
 import type { OrderDTO } from "@/types/order";
-import { translations } from "./i18n/translations";
+import { translations, type Locale } from "./i18n/translations";
 
-export function orderWhatsAppMessage(order: OrderDTO, locale: "en" | "ar") {
+export function orderWhatsAppMessage(order: OrderDTO, locale: Locale) {
   const text = translations[locale];
   const status = { pending: text.orders.statusPending, contacted: text.orders.statusContacted, fulfilled: text.orders.statusFulfilled, cancelled: text.orders.statusCancelled }[order.status];
   return [

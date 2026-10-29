@@ -10,6 +10,7 @@ import { connectToDatabase } from "@/lib/mongodb/connect";
 import { Property } from "@/models/Property";
 import { serializeProperty } from "@/lib/mongodb/serialize";
 import type { PropertyDTO } from "@/types/property";
+import { demoProperties } from "@/lib/demo-properties";
 import PropertyDetailsClient from "./PropertyDetailsClient";
 
 const publicOrigin = configuredPublicSiteOrigin();
@@ -29,6 +30,8 @@ const FALLBACK_METADATA: Metadata = {
  * same request without hitting the database twice.
  */
 const getVisibleProperty = cache(async (id: string): Promise<PropertyDTO | null> => {
+  const demoProperty = process.env.DEMO_FALLBACK === "true" ? demoProperties.find((property) => property._id === id) : null;
+  if (demoProperty) return demoProperty;
   if (!mongoose.Types.ObjectId.isValid(id)) return null;
 
   await connectToDatabase();
@@ -72,7 +75,7 @@ export async function generateMetadata({
     const image = property.images[0];
 
     return {
-      // Root layout's title template appends "| 41 للعقارت" automatically.
+      // Root layout's title template appends "| زين الرقي Zin Aroqi" automatically.
       keywords: propertyKeywords(property),
       title: property.title,
       description,

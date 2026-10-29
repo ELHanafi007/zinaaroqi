@@ -40,6 +40,7 @@ export function ListingsBrowser({
     search: "",
     category: fixedCategory ?? "",
     listingType: "",
+    legalStatus: "",
     status: "available",
     residencyType: "",
     sortBy: "createdAt",
@@ -93,7 +94,7 @@ export function ListingsBrowser({
           value={filters}
           onChange={next => {
             setPage(1);
-            setFilters(next.category === "land" ? { ...next, listingType: "", residencyType: "", propertyType: "", rooms: "" } : next);
+            setFilters(next.category === "land" ? { ...next, listingType: "", legalStatus: next.legalStatus, residencyType: "", propertyType: "", rooms: "" } : { ...next, legalStatus: "" });
           }}
           hideCategory={Boolean(fixedCategory)}
           hideResidencyType={fixedCategory === "land" || !session?.user}

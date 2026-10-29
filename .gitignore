@@ -42,4 +42,5 @@ _IGNORE_*/
 # Private configuration and generated deployment files
 .env
 /.next-backup-*/
+.next-stale-*/
 /whatsapp-service.zip

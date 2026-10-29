@@ -8,6 +8,7 @@ import { serializeProperty } from "@/lib/mongodb/serialize";
 import { propertyInputSchema, flattenZodErrors } from "@/lib/validations/property";
 import type { PropertyListResponse } from "@/types/property";
 import { requireListingsAccess, isBuildOnlyRole } from "@/lib/auth/requireSession";
+import { demoProperties } from "@/lib/demo-properties";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category");
     const listingType = searchParams.get("listingType");
+    const legalStatus = searchParams.get("legalStatus");
     const status = searchParams.get("status");
     const residencyType = searchParams.get("residencyType");
     const visibilityParam = searchParams.get("visibility");
@@ -41,6 +43,11 @@ export async function GET(req: NextRequest) {
     }
     if (listingType && ["sale", "rent"].includes(listingType)) {
       filter.listingType = listingType;
+    }
+    // Legal registration is a sale/land concern. Ignore this parameter for
+    // rentals and unrelated categories instead of producing misleading matches.
+    if (legalStatus && ["mohafada", "non_mohafada"].includes(legalStatus) && listingType !== "rent" && category === "land") {
+      filter.legalStatus = legalStatus;
     }
     if (status && ["available", "sold", "rented"].includes(status)) {
       filter.status = status;
@@ -63,6 +70,8 @@ export async function GET(req: NextRequest) {
           { title: { $regex: search, $options: "i" } },
           { "location.city": { $regex: search, $options: "i" } },
           { "location.district": { $regex: search, $options: "i" } },
+          { "location.bloc": { $regex: search, $options: "i" } },
+          { "location.number": { $regex: search, $options: "i" } },
           { "location.address": { $regex: search, $options: "i" } },
         ],
       });
@@ -91,6 +100,14 @@ export async function GET(req: NextRequest) {
       if (raw && Number.isFinite(value) && value >= 0) priceRange[operator] = value;
     }
     if (Object.keys(priceRange).length) filter.price = priceRange;
+
+    const areaRange: Record<string, number> = {};
+    for (const [parameter, operator] of [["minArea", "$gte"], ["maxArea", "$lte"]]) {
+      const raw = searchParams.get(parameter);
+      const value = Number(raw);
+      if (raw && Number.isFinite(value) && value >= 0) areaRange[operator] = value;
+    }
+    if (Object.keys(areaRange).length) filter["details.area"] = areaRange;
     const location = searchParams.get("location")?.trim();
     if (location) {
       const literal = location.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -149,10 +166,31 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(body, { status: 200 });
   } catch (err) {
     console.error("GET /api/properties failed:", err);
-    return NextResponse.json(
-      { error: "Failed to load listings. Please try again." },
-      { status: 500 }
+    if (process.env.DEMO_FALLBACK !== "true") {
+      return NextResponse.json({ error: "Listings database is temporarily unavailable." }, { status: 503 });
+    }
+    // Temporary presentation fallback: keep the browse experience usable while
+    // Atlas DNS/network access is being repaired. Writes still require MongoDB.
+    const { searchParams } = new URL(req.url);
+    const category = searchParams.get("category");
+    const listingType = searchParams.get("listingType");
+    const status = searchParams.get("status");
+    const search = searchParams.get("search")?.toLowerCase().trim();
+    const filtered = demoProperties.filter((property) =>
+      (!category || property.category === category) &&
+      (!listingType || property.listingType === listingType) &&
+      (!status || property.status === status) &&
+      (!search || `${property.title} ${property.location?.city} ${property.location?.district}`.toLowerCase().includes(search))
     );
+    return NextResponse.json({ data: filtered, total: filtered.length, stats: {
+      total: filtered.length,
+      builds: filtered.filter((p) => p.category === "build").length,
+      apartments: filtered.filter((p) => p.category === "apartment").length,
+      lands: filtered.filter((p) => p.category === "land").length,
+      forSale: filtered.filter((p) => p.listingType === "sale").length,
+      forRent: filtered.filter((p) => p.listingType === "rent").length,
+      available: filtered.length, sold: 0, rented: 0,
+    }, demo: true }, { status: 200 });
   }
 }
 

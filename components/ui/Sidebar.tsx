@@ -49,6 +49,7 @@ function isActive(pathname: string, href: string) {
     return (
       pathname === "/dashboard" ||
       (pathname.startsWith("/dashboard/") &&
+        !pathname.startsWith("/dashboard/map") &&
         !pathname.startsWith("/dashboard/orders") &&
         !pathname.startsWith("/dashboard/users") &&
         !pathname.startsWith("/dashboard/whatsapp"))
@@ -79,7 +80,15 @@ function NavLink({ item, pathname, onNavigate }: { item: NavItem; pathname: stri
   );
 }
 
-export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+export function SidebarNav({
+  onNavigate,
+  onToggleCollapse,
+  isCollapsed = false,
+}: {
+  onNavigate?: () => void;
+  onToggleCollapse?: () => void;
+  isCollapsed?: boolean;
+}) {
   const { t } = useLanguage();
   const pathname = usePathname();
   const { data: session, status } = useSession();
@@ -88,6 +97,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const adminItems: NavItem[] = [];
   if (role && LISTINGS_ROLES.includes(role)) {
     adminItems.push({ href: "/dashboard", labelKey: "nav.dashboard", mark: "grid" });
+    adminItems.push({ href: "/dashboard/map", labelKey: "nav.mapExplorer", mark: "location" });
   }
   if (role && ORDERS_ROLES.includes(role)) {
     adminItems.push({ href: "/dashboard/orders", labelKey: "nav.orders", mark: "clipboard" });
@@ -98,7 +108,55 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   }
 
   return (
-    <nav className="flex h-full flex-col gap-8 overflow-y-auto p-5">
+    <nav className="flex h-full flex-col gap-6 overflow-y-auto p-5">
+      {/* Top Sidebar Header with Collapse Button */}
+      {onToggleCollapse && (
+        <div className="flex items-center justify-between border-b border-ink-100/80 pb-3.5">
+          <div className="flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-moss-50 text-moss-600 shadow-sm">
+              <Icon name="grid" className="h-3.5 w-3.5" />
+            </span>
+            <span className="text-xs font-bold uppercase tracking-wider text-ink-700">
+              {t("nav.sidebarTitle")}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            aria-expanded={!isCollapsed}
+            className="group relative flex h-8 w-8 items-center justify-center rounded-lg border border-ink-200/80 bg-stone-50 text-ink-600 shadow-sm transition-all duration-200 hover:border-moss-500 hover:bg-moss-50 hover:text-moss-700 active:scale-90 focus-visible:ring-2 focus-visible:ring-moss-500 focus-visible:ring-offset-1"
+            title={`${t("nav.collapseSidebar")} (⌘B)`}
+            aria-label={t("nav.collapseSidebar")}
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="transition-transform duration-300 group-hover:scale-105"
+            >
+              <rect x="3" y="3" width="18" height="18" rx="2.5" ry="2.5" />
+              <line x1="9" y1="3" x2="9" y2="21" className="stroke-moss-600 transition-colors group-hover:stroke-moss-700" />
+              {/* Animated chevron arrow indicating collapse direction */}
+              <path
+                d="m15 9-3 3 3 3"
+                className="transition-transform duration-200 group-hover:-translate-x-0.5 rtl:rotate-180 rtl:group-hover:translate-x-0.5"
+              />
+            </svg>
+
+            {/* Hover Tooltip */}
+            <span className="pointer-events-none absolute -bottom-8 end-0 z-50 whitespace-nowrap rounded-md bg-ink-900 px-2 py-0.5 text-[10px] font-medium text-stone-100 opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+              {t("nav.collapseSidebar")} <kbd className="font-mono text-[9px] text-ink-300">⌘B</kbd>
+            </span>
+          </button>
+        </div>
+      )}
+
       <div>
         <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-widest text-ink-500">
           {t("nav.browseSection")}

@@ -1,0 +1,1186 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>دريم إكس · مستكشف خريطة العقارات</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;600;700&family=Inter:wght@400;500;600;700&family=Cairo:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #faf9f6;
+      --surface: #ffffff;
+      --surface-subtle: #f5f4ef;
+      --border: #e5e3db;
+      --border-dark: #d6d3c7;
+      --text-main: #16233a;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+      
+      --emerald: #1e3d2f;
+      --emerald-hover: #29523f;
+      --emerald-light: #e8f3ed;
+      
+      --gold: #b38844;
+      --gold-light: #faf5ea;
+      
+      --whatsapp: #25D366;
+      --whatsapp-hover: #20ba59;
+      
+      --shadow-sm: 0 1px 3px rgba(22, 35, 58, 0.05);
+      --shadow-md: 0 4px 16px -2px rgba(22, 35, 58, 0.08), 0 2px 6px -1px rgba(22, 35, 58, 0.04);
+      --shadow-lg: 0 12px 32px -4px rgba(22, 35, 58, 0.12), 0 4px 12px -2px rgba(22, 35, 58, 0.06);
+
+      --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-display: "Fraunces", Georgia, serif;
+      --font-ar: "Cairo", sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      width: 100%;
+      background: var(--bg);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, input, select {
+      font: inherit;
+      color: inherit;
+      outline: none;
+    }
+    a { color: inherit; text-decoration: none; }
+    html[lang="ar"] body, html[lang="ar"] button, html[lang="ar"] input, html[lang="ar"] select { font-family: var(--font-ar), var(--font-body), sans-serif; }
+    html[lang="ar"] select { direction: rtl; text-align: right; }
+
+    /* App Container */
+    .map-app {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+      position: relative;
+      background: var(--bg);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Fullscreen Expanded State */
+    .map-app.is-fullscreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 99999;
+    }
+
+    /* Minimal Top Search & Filter Bar */
+    .top-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: var(--shadow-sm);
+      direction: rtl;
+    }
+
+    .search-filter-group {
+      display: grid;
+      grid-template-columns: 1fr;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      max-width: 1100px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+      direction: rtl;
+    }
+    .search-filter-group::-webkit-scrollbar { display: none; }
+
+    /* Main Search Input */
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      border-radius: 9999px;
+      padding: 7px 14px;
+      min-width: 260px;
+      max-width: 340px;
+      flex: 1;
+      transition: all 0.15s ease;
+      direction: rtl;
+      width: min(100%, 620px);
+    }
+    .search-box:focus-within {
+      background: #ffffff;
+      border-color: var(--emerald);
+      box-shadow: 0 0 0 2px var(--emerald-light);
+    }
+    .search-box svg {
+      width: 16px;
+      height: 16px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .search-box input {
+      border: 0;
+      background: transparent;
+      font-size: 13px;
+      width: 100%;
+      color: var(--text-main);
+      direction: rtl;
+      text-align: right;
+    }
+    .search-box input::placeholder {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    /* Filter Select Pills */
+    .filter-select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 9999px;
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+      flex-shrink: 0;
+      min-height: 36px;
+    }
+
+    .map-search-row { display: flex; align-items: center; min-width: 0; }
+    .map-filter-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      overflow-x: auto;
+      scrollbar-width: thin;
+      padding-bottom: 2px;
+    }
+    .map-filter-row::-webkit-scrollbar { height: 4px; }
+    .map-filter-row::-webkit-scrollbar-thumb { background: var(--border-dark); border-radius: 999px; }
+    .filter-select:hover {
+      border-color: var(--border-dark);
+      background: var(--surface-subtle);
+    }
+    .filter-select:focus {
+      border-color: var(--emerald);
+      box-shadow: 0 0 0 2px var(--emerald-light);
+    }
+
+    /* Right Action Bar (Results Badge + Expand Map Button) */
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+      direction: rtl;
+    }
+
+    .count-badge {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--emerald);
+      background: var(--emerald-light);
+      padding: 5px 12px;
+      border-radius: 9999px;
+      white-space: nowrap;
+      display: none;
+    }
+    @media (min-width: 768px) {
+      .count-badge { display: inline-flex; }
+    }
+
+    /* Google Maps Style Expand Button */
+    .btn-expand {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 9999px;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .btn-expand:hover {
+      background: var(--emerald);
+      border-color: var(--emerald);
+      color: #ffffff;
+      box-shadow: var(--shadow-md);
+    }
+    .btn-expand svg {
+      width: 14px;
+      height: 14px;
+      transition: transform 0.2s ease;
+    }
+    .btn-expand:hover svg {
+      transform: scale(1.15);
+    }
+
+    /* Map Canvas */
+    .map-wrapper {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+      background: #f1ede4;
+    }
+
+    /* Map Tool Controls Dock (Bottom Right) */
+    .map-tools {
+      position: absolute;
+      bottom: 24px;
+      right: 20px;
+      z-index: 900;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .tool-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .tool-btn:hover {
+      background: var(--surface-subtle);
+      border-color: var(--emerald);
+      color: var(--emerald);
+      transform: translateY(-1px);
+    }
+    .tool-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Modern Airbnb / Google Maps Style Interactive Price Pin */
+    .dreamx-pin {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #ffffff;
+      color: var(--text-main);
+      border: 1.5px solid #d6d3c7;
+      border-radius: 9999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+      box-shadow: 0 3px 12px rgba(22, 35, 58, 0.16);
+      cursor: pointer;
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      white-space: nowrap;
+      user-select: none;
+    }
+    .dreamx-pin:hover {
+      transform: scale(1.08) translateY(-2px);
+      background: var(--emerald);
+      border-color: var(--emerald);
+      color: #ffffff;
+      box-shadow: 0 6px 18px rgba(30, 61, 47, 0.3);
+      z-index: 9999 !important;
+    }
+    .dreamx-pin.selected {
+      background: var(--emerald);
+      border-color: var(--emerald);
+      color: #ffffff;
+      transform: scale(1.12) translateY(-2px);
+      box-shadow: 0 8px 24px rgba(30, 61, 47, 0.35);
+      z-index: 10000 !important;
+    }
+    .pin-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--emerald);
+      flex-shrink: 0;
+    }
+    .dreamx-pin.selected .pin-dot,
+    .dreamx-pin:hover .pin-dot {
+      background: #ffffff;
+    }
+    .dreamx-pin.rent .pin-dot {
+      background: var(--gold);
+    }
+    .dreamx-pin.sold .pin-dot {
+      background: #94a3b8;
+    }
+
+    /* Floating Google Maps Style Property Card */
+    .floating-card-container {
+      position: absolute;
+      bottom: 24px;
+      right: 20px;
+      left: auto;
+      z-index: 950;
+      max-width: 420px;
+      width: calc(100% - 40px);
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .floating-card-container.is-visible {
+      pointer-events: auto;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .place-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .place-card-close {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: auto;
+      z-index: 10;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-main);
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.15s ease;
+    }
+    .place-card-close:hover {
+      background: #ffffff;
+      transform: scale(1.08);
+    }
+
+    .place-card-image {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      background: var(--surface-subtle);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .place-card-body {
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      direction: rtl;
+      text-align: right;
+    }
+
+    .place-card-price-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      direction: rtl;
+    }
+
+    .place-price {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--emerald);
+      letter-spacing: -0.3px;
+    }
+
+    .place-badge {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      background: var(--emerald-light);
+      color: var(--emerald);
+    }
+
+    .place-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+      line-height: 1.3;
+    }
+
+    .place-location {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--text-muted);
+      direction: rtl;
+    }
+    .place-location svg {
+      width: 13px;
+      height: 13px;
+      color: var(--emerald);
+      flex-shrink: 0;
+    }
+
+    .place-specs {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+      padding-top: 8px;
+      margin-top: 2px;
+      direction: rtl;
+    }
+
+    .place-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+      direction: rtl;
+    }
+
+    .btn-wa {
+      flex: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: var(--whatsapp);
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 10px;
+      transition: all 0.15s ease;
+      box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);
+    }
+    .btn-wa:hover {
+      background: var(--whatsapp-hover);
+      transform: translateY(-1px);
+    }
+    .btn-wa svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    .btn-details {
+      flex: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      background: var(--surface-subtle);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 10px;
+      transition: all 0.15s ease;
+    }
+    .btn-details:hover {
+      background: #ffffff;
+      border-color: var(--border-dark);
+      color: var(--emerald);
+    }
+
+    /* Custom Cluster styling to match main site */
+    .marker-cluster-small,
+    .marker-cluster-medium,
+    .marker-cluster-large {
+      background-color: rgba(30, 61, 47, 0.15) !important;
+    }
+    .marker-cluster-small div,
+    .marker-cluster-medium div,
+    .marker-cluster-large div {
+      background-color: var(--emerald) !important;
+      color: #ffffff !important;
+      font-weight: 700 !important;
+      font-family: var(--font-body) !important;
+      font-size: 12px !important;
+      box-shadow: 0 2px 8px rgba(30, 61, 47, 0.3) !important;
+    }
+
+    @media (max-width: 767px) {
+      .top-bar { padding: 8px 10px; gap: 8px; }
+      .search-filter-group { min-width: 0; width: 100%; padding-bottom: 2px; }
+      .map-filter-row { margin-inline: -2px; padding-inline: 2px 12px; }
+      .search-box { width: 100%; min-width: 0; }
+      .filter-select { padding-inline: 11px; }
+      .top-actions { width: auto; }
+      .btn-expand { width: 38px; height: 36px; padding: 0; justify-content: center; }
+      .btn-expand span { display: none; }
+      .floating-card-container { right: 10px; width: calc(100% - 20px); bottom: 12px; }
+      .place-card-image { height: 120px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="map-app" id="map-app">
+    
+    <!-- Minimal Search & Filter Bar (Above) -->
+    <header class="top-bar">
+      <div class="search-filter-group">
+        <div class="map-search-row">
+          <!-- Search Box -->
+          <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.3-4.3"/>
+          </svg>
+          <input
+            type="search"
+            id="input-search"
+            placeholder="ابحث عن الحي أو البلوك أو الرقم…"
+            autocomplete="off"
+          />
+          </div>
+        </div>
+
+        <div class="map-filter-row">
+          <!-- Transaction Filter (Sale / Rent) -->
+          <select id="select-transaction" class="filter-select">
+          <option value="all">كل العروض</option>
+          <option value="sale">للبيع</option>
+          <option value="rent">للإيجار</option>
+          </select>
+
+        <!-- Property Type Filter -->
+        <select id="select-property-type" class="filter-select">
+          <option value="all">كل الأنواع</option>
+          <option value="apartment">شقق</option>
+          <option value="build">مبانٍ وفلل</option>
+          <option value="land">أراضٍ</option>
+          <option value="shop">محلات تجارية</option>
+        </select>
+
+        <!-- Neighborhood Filter (Laâyoune) -->
+        <select id="select-neighborhood" class="filter-select">
+          <option value="all">كل أحياء العيون</option>
+        </select>
+
+        <!-- Legal status filter -->
+        <select id="select-legal-status" class="filter-select">
+          <option value="all">محفظة وغير محفظة</option>
+          <option value="mohafada">محفظة</option>
+          <option value="non_mohafada">غير محفظة</option>
+        </select>
+
+        <!-- Rooms Filter -->
+        <select id="select-rooms" class="filter-select">
+          <option value="all">كل الغرف</option>
+          <option value="1">غرفة فأكثر</option>
+          <option value="2">غرفتان فأكثر</option>
+          <option value="3">3 غرف فأكثر</option>
+          <option value="4">4 غرف فأكثر</option>
+          <option value="5">5 غرف فأكثر</option>
+        </select>
+
+        <!-- Surface / Area (Metrage) Filter -->
+        <select id="select-area" class="filter-select">
+          <option value="all">كل المساحات</option>
+          <option value="0-80">أقل من 80 م²</option>
+          <option value="80-120">80 – 120 م²</option>
+          <option value="120-200">120 – 200 م²</option>
+          <option value="200-500">200 – 500 م²</option>
+          <option value="500+">أكثر من 500 م²</option>
+        </select>
+
+        <!-- Price Filter -->
+          <select id="select-price" class="filter-select">
+          <option value="all">كل الأسعار</option>
+          <option value="500000">حتى 500,000 درهم</option>
+          <option value="1000000">حتى 1,000,000 درهم</option>
+          <option value="2000000">حتى 2,000,000 درهم</option>
+          <option value="5000000">حتى 5,000,000 درهم</option>
+          </select>
+
+          <!-- Reset All Filters -->
+          <button type="button" id="btn-reset-filters" class="filter-select" style="background:#f1ede4;font-weight:600;border:none;">
+          ↺ مسح الفلاتر
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Right Action Group -->
+      <div class="top-actions">
+        <span class="count-badge" id="count-badge">جارٍ تحميل العقارات…</span>
+
+        <!-- Google Maps Style Expand Button -->
+        <button type="button" id="btn-expand" class="btn-expand" title="Expand map (Fullscreen)">
+          <svg id="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 3 21 3 21 9"/>
+            <polyline points="9 21 3 21 3 15"/>
+            <line x1="21" y1="3" x2="14" y2="10"/>
+            <line x1="3" y1="21" x2="10" y2="14"/>
+          </svg>
+          <span id="expand-label">تكبير الخريطة</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Map Canvas (Underneath) -->
+    <main class="map-wrapper">
+      <div id="map"></div>
+
+      <!-- Quick Controls (Bottom Right) -->
+      <div class="map-tools">
+        <button class="tool-btn" id="btn-toggle-layer" title="Toggle Satellite / Street View">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+            <polyline points="2 17 12 22 22 17"/>
+            <polyline points="2 12 12 17 22 12"/>
+          </svg>
+        </button>
+        <button class="tool-btn" id="btn-recenter" title="Recenter on Laâyoune">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Floating Google Maps Style Property Card (Bottom Left) -->
+      <div class="floating-card-container" id="floating-card-container">
+        <div class="place-card" id="place-card">
+          <button class="place-card-close" id="btn-card-close" aria-label="Close card">✕</button>
+          
+          <img id="card-img" class="place-card-image" src="" alt="Property" style="display:none;">
+
+          <div class="place-card-body">
+            <div class="place-card-price-row">
+              <span class="place-price" id="card-price">0 MAD</span>
+              <span class="place-badge" id="card-badge">Available</span>
+            </div>
+
+            <h3 class="place-title" id="card-title">Property Title</h3>
+
+            <div class="place-location">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+              <span id="card-location">Laâyoune</span>
+            </div>
+
+            <div class="place-specs" id="card-specs">
+              <!-- Specs details -->
+            </div>
+
+            <div class="place-actions">
+              <!-- WhatsApp Contact (+212731305954) -->
+              <a href="#" id="card-btn-wa" class="btn-wa" target="_blank" rel="noopener noreferrer">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2z"/>
+                </svg>
+                <span>تواصل عبر واتساب</span>
+              </a>
+
+              <!-- Details / Edit Link -->
+              <a href="#" id="card-btn-details" class="btn-details" target="_top">
+                <span>عرض التفاصيل</span>
+                <span>↗</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Scripts: Leaflet and Clustering -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+  <script>
+    // Constants
+    const LAAYOUNE_COORDS = [27.1536, -13.2033];
+    const OFFICE_WHATSAPP = "212731305954";
+
+    let map;
+    let clusterLayer;
+    let allProperties = [];
+    let markersMap = new Map();
+    let currentSelectedId = null;
+    let isExpanded = false;
+
+    // Filters
+    const filters = {
+      search: "",
+      transaction: "all",
+      propertyType: "all",
+      neighborhood: "all",
+      legalStatus: "all",
+      maxPrice: "all",
+      rooms: "all",
+      area: "all",
+      status: "all"
+    };
+
+    function formatMAD(amount) {
+      if (amount == null) return "Prix sur demande";
+      return new Intl.NumberFormat("fr-MA").format(amount) + " MAD";
+    }
+
+    function formatCompactMAD(amount) {
+      if (amount == null) return "Sur demande";
+      if (amount >= 1000000) return (amount / 1000000).toFixed(1).replace(/\.0$/, "") + "M MAD";
+      if (amount >= 1000) return (amount / 1000).toFixed(0) + "K MAD";
+      return amount + " MAD";
+    }
+
+    function isLegalStatusRelevant() {
+      return filters.transaction === "sale" && filters.propertyType === "land";
+    }
+
+    function updateLegalStatusControl() {
+      const control = document.getElementById("select-legal-status");
+      if (!control) return;
+      const relevant = isLegalStatusRelevant();
+      control.disabled = !relevant;
+      control.style.display = relevant ? "inline-block" : "none";
+      if (!relevant) {
+        filters.legalStatus = "all";
+        control.value = "all";
+      }
+    }
+
+    // Initialize Map with 100% Free OpenStreetMap + ESRI Satellite (Zero API keys needed)
+    let streetLayer, satelliteLayer;
+    let currentTileMode = "streets";
+
+    function initMap() {
+      map = L.map("map", {
+        center: LAAYOUNE_COORDS,
+        zoom: 13,
+        zoomControl: false
+      });
+
+      // Zoom control bottom-right
+      L.control.zoom({ position: "bottomright" }).addTo(map);
+
+      // 1. OpenStreetMap (100% free, zero API keys, no watermark)
+      streetLayer = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19
+      });
+
+      // 2. ESRI World Imagery (High-res Satellite, 100% free, no watermark)
+      satelliteLayer = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+        attribution: '&copy; Esri, Maxar, Earthstar Geographics',
+        maxZoom: 18
+      });
+
+      // Start with Street view
+      streetLayer.addTo(map);
+
+      // Toggle Satellite / Street View
+      document.getElementById("btn-toggle-layer").addEventListener("click", () => {
+        if (currentTileMode === "streets") {
+          map.removeLayer(streetLayer);
+          satelliteLayer.addTo(map);
+          currentTileMode = "satellite";
+          document.getElementById("btn-toggle-layer").style.background = "var(--emerald)";
+          document.getElementById("btn-toggle-layer").style.color = "#ffffff";
+        } else {
+          map.removeLayer(satelliteLayer);
+          streetLayer.addTo(map);
+          currentTileMode = "streets";
+          document.getElementById("btn-toggle-layer").style.background = "";
+          document.getElementById("btn-toggle-layer").style.color = "";
+        }
+      });
+
+      clusterLayer = L.markerClusterGroup({
+        showCoverageOnHover: false,
+        maxClusterRadius: 35,
+        spiderfyOnMaxZoom: true
+      });
+      map.addLayer(clusterLayer);
+
+      // Dismiss place card on map click
+      map.on("click", (e) => {
+        if (!e.originalEvent.target.closest(".dreamx-pin")) {
+          closeCard();
+        }
+      });
+    }
+
+    // Load data from production API
+    async function loadData() {
+      try {
+        let minArea = "";
+        let maxArea = "";
+        if (filters.area === "0-80") { maxArea = "80"; }
+        else if (filters.area === "80-120") { minArea = "80"; maxArea = "120"; }
+        else if (filters.area === "120-200") { minArea = "120"; maxArea = "200"; }
+        else if (filters.area === "200-500") { minArea = "200"; maxArea = "500"; }
+        else if (filters.area === "500+") { minArea = "500"; }
+
+        const query = new URLSearchParams({
+          city: "laayoune",
+          transaction: filters.transaction,
+          propertyType: filters.propertyType,
+          neighborhood: filters.neighborhood,
+          legalStatus: isLegalStatusRelevant() ? filters.legalStatus : "all",
+          status: filters.status,
+          maxPrice: filters.maxPrice === "all" ? "" : filters.maxPrice,
+          rooms: filters.rooms === "all" ? "" : filters.rooms,
+          minArea,
+          maxArea,
+          search: filters.search
+        });
+
+        const res = await fetch(`/api/admin/properties/map?${query.toString()}`);
+        if (!res.ok) throw new Error("Failed to load map data");
+        const json = await res.json();
+
+        allProperties = json.data || [];
+        populateNeighborhoods(json.neighborhoods || []);
+        renderMarkers();
+        updateCountBadge();
+      } catch (err) {
+        console.error("Error loading map listings:", err);
+      }
+    }
+
+    function populateNeighborhoods(neighborhoods) {
+      const select = document.getElementById("select-neighborhood");
+      const current = select.value;
+      select.innerHTML = `<option value="all">كل أحياء العيون</option>`;
+
+      neighborhoods.forEach(n => {
+        const opt = document.createElement("option");
+        opt.value = n.id;
+        opt.textContent = `${n.name} · ${n.nameAr}`;
+        if (n.id === current) opt.selected = true;
+        select.appendChild(opt);
+      });
+    }
+
+    function updateCountBadge() {
+      const badge = document.getElementById("count-badge");
+      const count = allProperties.length;
+      badge.textContent = count === 1 ? "عقار واحد" : `${count} عقارات`;
+    }
+
+    function renderMarkers() {
+      clusterLayer.clearLayers();
+      markersMap.clear();
+
+      const validPoints = [];
+
+      allProperties.forEach(p => {
+        if (p.latitude != null && p.longitude != null) {
+          const latLng = [p.latitude, p.longitude];
+          validPoints.push(latLng);
+
+          const pinEl = document.createElement("div");
+          pinEl.className = `dreamx-pin ${p.transactionType} ${currentSelectedId === p.id ? "selected" : ""}`;
+          pinEl.innerHTML = `
+            <span class="pin-dot"></span>
+            <span>${formatCompactMAD(p.priceAmount)}</span>
+          `;
+
+          const icon = L.divIcon({
+            className: "",
+            html: pinEl,
+            iconSize: [88, 30],
+            iconAnchor: [44, 15]
+          });
+
+          const marker = L.marker(latLng, { icon });
+          marker.on("click", (e) => {
+            L.DomEvent.stopPropagation(e);
+            selectProperty(p);
+          });
+
+          clusterLayer.addLayer(marker);
+          markersMap.set(p.id, { marker, element: pinEl, data: p });
+        }
+      });
+
+      // Super interactive automatic zoom in/out with smooth animation
+      if (validPoints.length === 1) {
+        map.flyTo(validPoints[0], 16, { duration: 0.8 });
+      } else if (validPoints.length > 1) {
+        const bounds = L.latLngBounds(validPoints);
+        map.flyToBounds(bounds, {
+          padding: [50, 50],
+          maxZoom: 16,
+          duration: 0.8
+        });
+      } else {
+        // If 0 properties match, smoothly zoom back out to city view
+        map.flyTo(LAAYOUNE_COORDS, 13, { duration: 0.8 });
+      }
+    }
+
+    function selectProperty(p) {
+      currentSelectedId = p.id;
+
+      // Update pin active state
+      markersMap.forEach((entry, id) => {
+        if (entry.element) {
+          entry.element.classList.toggle("selected", id === p.id);
+        }
+      });
+
+      // Fly smoothly to marker
+      map.flyTo([p.latitude, p.longitude], Math.max(map.getZoom(), 15), {
+        duration: 0.5
+      });
+
+      // Open floating card
+      openCard(p);
+    }
+
+    function openCard(p) {
+      const container = document.getElementById("floating-card-container");
+      
+      document.getElementById("card-price").textContent = formatMAD(p.priceAmount);
+      document.getElementById("card-title").textContent = p.title;
+      
+      let locDetails = `${p.neighborhoodName || p.district || 'Laâyoune'}`;
+      if (p.bloc) locDetails += ` · Bloc: ${p.bloc}`;
+      if (p.number) locDetails += ` · N°: ${p.number}`;
+      document.getElementById("card-location").textContent = locDetails;
+      
+      const badge = document.getElementById("card-badge");
+      badge.textContent = p.transactionType === "sale" ? "للبيع" : "للإيجار";
+
+      const img = document.getElementById("card-img");
+      if (p.primaryImageUrl) {
+        img.src = p.primaryImageUrl;
+        img.style.display = "block";
+      } else {
+        img.style.display = "none";
+      }
+
+      // Specs with Metrage (Area in m²)
+      const specs = document.getElementById("card-specs");
+      const specsList = [
+        `<span><strong>${p.category || 'عقار'}</strong></span>`
+      ];
+      if (p.area != null) {
+        specsList.push(`<span>•</span><span style="color:var(--gold);font-weight:700;">📐 ${p.area} م²</span>`);
+      }
+      if (p.rooms != null) {
+        specsList.push(`<span>•</span><span>${p.rooms} غرف</span>`);
+      }
+      if (p.legalStatus) {
+        specsList.push(`<span>•</span><span>${p.legalStatus === 'mohafada_titre' ? 'محفظ' : 'قياسي'}</span>`);
+      }
+      specs.innerHTML = specsList.join(" ");
+
+      // WhatsApp Button
+      let placeDetail = `${p.neighborhoodName || 'Laâyoune'}${p.bloc ? ', Bloc ' + p.bloc : ''}${p.number ? ', N° ' + p.number : ''}`;
+      const waMsg = `Bonjour DreamX, je suis intéressé par votre annonce "${p.title}" (${formatMAD(p.priceAmount)} à ${placeDetail}). Est-elle toujours disponible?`;
+      document.getElementById("card-btn-wa").href = `https://wa.me/${OFFICE_WHATSAPP}?text=${encodeURIComponent(waMsg)}`;
+
+      // Edit / Details Link
+      document.getElementById("card-btn-details").href = `/dashboard/${p.id}/edit`;
+
+      container.classList.add("is-visible");
+    }
+
+    function closeCard() {
+      document.getElementById("floating-card-container").classList.remove("is-visible");
+      currentSelectedId = null;
+      markersMap.forEach(entry => {
+        if (entry.element) entry.element.classList.remove("selected");
+      });
+    }
+
+    // Google Maps Style Expand / Collapse Toggle
+    function toggleExpandMap() {
+      const app = document.getElementById("map-app");
+      const label = document.getElementById("expand-label");
+      const icon = document.getElementById("expand-icon");
+
+      isExpanded = !isExpanded;
+
+      if (isExpanded) {
+        // Fullscreen Mode
+        if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        }
+        app.classList.add("is-fullscreen");
+        label.textContent = "الخروج من ملء الشاشة";
+        icon.innerHTML = `
+          <polyline points="4 14 10 14 10 20"/>
+          <polyline points="20 10 14 10 14 4"/>
+          <line x1="14" y1="10" x2="21" y2="3"/>
+          <line x1="3" y1="21" x2="10" y2="14"/>
+        `;
+      } else {
+        // Exit Fullscreen Mode
+        if (document.fullscreenElement && document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        }
+        app.classList.remove("is-fullscreen");
+        label.textContent = "تكبير الخريطة";
+        icon.innerHTML = `
+          <polyline points="15 3 21 3 21 9"/>
+          <polyline points="9 21 3 21 3 15"/>
+          <line x1="21" y1="3" x2="14" y2="10"/>
+          <line x1="3" y1="21" x2="10" y2="14"/>
+        `;
+      }
+
+      // Smoothly resize Leaflet viewport
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 300);
+    }
+
+    // Handle ESC key or Fullscreen change
+    document.addEventListener("fullscreenchange", () => {
+      if (!document.fullscreenElement && isExpanded) {
+        toggleExpandMap();
+      }
+    });
+
+    // Event Listeners
+    document.addEventListener("DOMContentLoaded", () => {
+      initMap();
+      updateLegalStatusControl();
+      loadData();
+
+      // Search input with debounce
+      let searchTimeout;
+      document.getElementById("input-search").addEventListener("input", (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          filters.search = e.target.value.trim();
+          loadData();
+        }, 250);
+      });
+
+      // Filter selects
+      document.getElementById("select-transaction").addEventListener("change", (e) => {
+        filters.transaction = e.target.value;
+        updateLegalStatusControl();
+        loadData();
+      });
+
+      document.getElementById("select-property-type").addEventListener("change", (e) => {
+        filters.propertyType = e.target.value;
+        updateLegalStatusControl();
+        loadData();
+      });
+
+      document.getElementById("select-neighborhood").addEventListener("change", (e) => {
+        filters.neighborhood = e.target.value;
+        loadData();
+      });
+
+      document.getElementById("select-legal-status").addEventListener("change", (e) => {
+        filters.legalStatus = e.target.value;
+        loadData();
+      });
+
+      document.getElementById("select-rooms").addEventListener("change", (e) => {
+        filters.rooms = e.target.value;
+        loadData();
+      });
+
+      document.getElementById("select-area").addEventListener("change", (e) => {
+        filters.area = e.target.value;
+        loadData();
+      });
+
+      document.getElementById("select-price").addEventListener("change", (e) => {
+        filters.maxPrice = e.target.value;
+        loadData();
+      });
+
+      // Reset Button
+      document.getElementById("btn-reset-filters").addEventListener("click", () => {
+        filters.search = "";
+        filters.transaction = "all";
+        filters.propertyType = "all";
+        filters.neighborhood = "all";
+        filters.legalStatus = "all";
+        filters.maxPrice = "all";
+        filters.rooms = "all";
+        filters.area = "all";
+        document.getElementById("input-search").value = "";
+        document.getElementById("select-transaction").value = "all";
+        document.getElementById("select-property-type").value = "all";
+        document.getElementById("select-neighborhood").value = "all";
+        document.getElementById("select-legal-status").value = "all";
+        updateLegalStatusControl();
+        document.getElementById("select-rooms").value = "all";
+        document.getElementById("select-area").value = "all";
+        document.getElementById("select-price").value = "all";
+        loadData();
+      });
+
+      // Expand Button
+      document.getElementById("btn-expand").addEventListener("click", toggleExpandMap);
+
+      // Recenter Button
+      document.getElementById("btn-recenter").addEventListener("click", () => {
+        map.flyTo(LAAYOUNE_COORDS, 13, { duration: 0.6 });
+      });
+
+      // Card Close
+      document.getElementById("btn-card-close").addEventListener("click", closeCard);
+    });
+  </script>
+</body>
+</html>

@@ -5,16 +5,17 @@ import "./globals.css";
 import { AppShell } from "@/components/ui/AppShell";
 import { LanguageProvider } from "@/lib/i18n/LanguageProvider";
 import { AuthSessionProvider } from "@/components/auth/AuthSessionProvider";
+import { MoroccoSplash } from "@/components/ui/MoroccoSplash";
 
 export const metadata: Metadata = {
   keywords: listingKeywords(),
   metadataBase: new URL(configuredPublicSiteOrigin() || process.env.NEXTAUTH_URL || "http://localhost:3000"),
   title: {
-    default: "41 للعقارت | Real Estate Listings",
+    default: "زين الرقي للعقارات | Zin Aroqi Immobilier",
     // Per-page metadata can just set title: "Apartments" and this template
     // appends the brand automatically, so every page's <title> stays
-    // consistent without repeating "| 41 للعقارت" everywhere.
-    template: "%s | 41 للعقارت",
+    // consistent without repeating "| Zin Aroqi" everywhere.
+    template: "%s | زين الرقي Zin Aroqi",
   },
   description:
     "Browse apartments, buildings, and land for sale or rent — with clear pricing, verified listings, and direct contact with our office.",
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
     follow: true,
   },
   openGraph: {
-    siteName: "41 للعقارت",
+    siteName: "زين الرقي | Zin Aroqi Immobilier",
     type: "website",
   },
 };
@@ -36,6 +37,7 @@ export default function RootLayout({
   return (
     <html lang="en" dir="ltr" suppressHydrationWarning>
       <body className="font-body antialiased">
+        <MoroccoSplash />
         <AuthSessionProvider>
           <LanguageProvider>
             <AppShell>{children}</AppShell>

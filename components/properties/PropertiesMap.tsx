@@ -6,6 +6,7 @@ import { fetchProperties } from "@/lib/api-client";
 import { mapCoordinates } from "@/lib/map-coordinates";
 import { propertyLocationUrl } from "@/lib/property-share";
 import { formatPriceWithPeriod } from "@/lib/format";
+import { currencySymbol, formatCompactAmount } from "@/lib/currency";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 
 type Pin = { id: string; title: string; price: string; pinLabel: string; category: string; point: [number, number] };
@@ -39,7 +40,7 @@ export function PropertiesMap({ filters }: { filters: FilterState }) {
             if (!point) {
               try { const response = await fetch(`/api/maps/resolve?url=${encodeURIComponent(url)}`); if (response.ok) point = mapCoordinates((await response.json()).embedUrl); } catch { /* Missing locations remain counted below. */ }
             }
-            if (point) pins.push({ id: property._id, title: property.title, category: t(`badges.category.${property.category}`), point, pinLabel: property.price == null ? t("property.priceOnRequest") : `${new Intl.NumberFormat(locale, { notation: "compact", maximumFractionDigits: 1 }).format(property.price)} ${t("common.sar")}`, price: formatPriceWithPeriod(property.price, property.listingType, property.rentalPeriod, t, locale) });
+            if (point) pins.push({ id: property._id, title: property.title, category: t(`badges.category.${property.category}`), point, pinLabel: property.price == null ? t("property.priceOnRequest") : `${formatCompactAmount(property.price, locale)} ${currencySymbol(locale)}`, price: formatPriceWithPeriod(property.price, property.listingType, property.rentalPeriod, t, locale) });
           }
         }
         await Promise.all([worker(), worker(), worker()]);

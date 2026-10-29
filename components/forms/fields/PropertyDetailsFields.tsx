@@ -21,8 +21,28 @@ export function PropertyDetailsFields({
       <h3 className="flex flex-wrap items-center gap-2 font-display text-base font-semibold text-ink-800"><Icon name="home" className="h-5 w-5 text-moss-500" />{t("form.detailsSection")}</h3>
       <p className="mt-1 text-sm text-ink-400">{t("form.detailsHint")}</p>
       <div className="mt-3"><Toggle checked={form.hasDetails} onChange={(checked) => update("hasDetails", checked)} label={t("form.hasDetails")} /></div>
-      {form.hasDetails && <>
       <div className="mt-3 grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <label className="label-field" htmlFor="area">
+            {t("form.area")} <span className="text-xs text-ink-400 font-normal">({t("form.areaUnit")})</span>
+          </label>
+          <div className="relative">
+            <input
+              id="area"
+              type="number"
+              min={0}
+              step="any"
+              className="input-field !pe-14"
+              placeholder="e.g. 120"
+              value={form.area}
+              onChange={(e) => update("area", e.target.value)}
+            />
+            <span className="pointer-events-none absolute end-3.5 top-2.5 rounded bg-ink-100 px-2 py-0.5 text-xs font-semibold text-ink-600">
+              m²
+            </span>
+          </div>
+          {errors["details.area"] && <p className="field-error">{errors["details.area"]}</p>}
+        </div>
         <div>
           <label className="label-field" htmlFor="rooms">{t("form.rooms")}</label>
           <input
@@ -58,7 +78,6 @@ export function PropertyDetailsFields({
         <ResidencyField value={form.residencyType} onChange={(value) => update("residencyType", value)} t={t} />
         <p className="mt-1.5 text-xs text-ink-400">{t("form.residencyTypeHint")}</p>
       </div>
-      </>}
     </section>
   );
 }

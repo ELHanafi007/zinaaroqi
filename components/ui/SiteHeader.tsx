@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
+import { LocaleSwitcher } from "@/components/ui/LocaleSwitcher";
 import type { UserRole } from "@/types/user";
 import Image from "next/image";
 import logo from "./logo.png";
@@ -10,7 +11,7 @@ import logo from "./logo.png";
 const LISTINGS_ROLES: UserRole[] = ["admin", "real_estate_officer", "project_manager"];
 
 export function SiteHeader({ onMenuClick }: { onMenuClick?: () => void }) {
-	const { t, locale, setLocale } = useLanguage();
+	const { t } = useLanguage();
 	const { data: session } = useSession();
 	const canAddListing = Boolean(session?.user.role && LISTINGS_ROLES.includes(session.user.role));
 
@@ -31,7 +32,7 @@ export function SiteHeader({ onMenuClick }: { onMenuClick?: () => void }) {
 					</button>
 					<Link href="/" className="flex items-center gap-2.5">
 						<span className="flex h-11 w-11 items-center justify-center font-display text-sm font-semibold text-ink-800">
-							<Image src={logo} alt="" />
+							<Image src={logo} alt="Zin Aroqi Immobilier - زين الرقي" />
 						</span>
 						<span className="font-display text-lg font-semibold sm:text-xl tracking-tight text-ink-800">{t("nav.brand")}</span>
 					</Link>
@@ -44,15 +45,7 @@ export function SiteHeader({ onMenuClick }: { onMenuClick?: () => void }) {
 							{t("nav.addListing")}
 						</Link>
 					)}
-					<button
-						type="button"
-						onClick={() => setLocale(locale === "en" ? "ar" : "en")}
-						className="rounded-md border border-ink-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-ink-600 transition hover:border-ink-400 hover:bg-stone-50"
-						aria-label={locale === "en" ? "Switch to Arabic" : "التبديل إلى الإنجليزية"}
-					>
-						{locale === "en" ? "العربية" : "English"}
-					</button>
-				</div>
+					<LocaleSwitcher />				</div>
 			</div>
 		</header>
 	);

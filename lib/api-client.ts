@@ -32,6 +32,7 @@ export function buildQuery(filters: Partial<FilterState> & { page?: number; limi
   if (filters.search) params.set("search", filters.search);
   if (filters.category) params.set("category", filters.category);
   if (filters.listingType) params.set("listingType", filters.listingType);
+  if (filters.legalStatus) params.set("legalStatus", filters.legalStatus);
   if (filters.status) params.set("status", filters.status);
   if (filters.residencyType) params.set("residencyType", filters.residencyType);
   if (filters.sortBy) params.set("sortBy", filters.sortBy);

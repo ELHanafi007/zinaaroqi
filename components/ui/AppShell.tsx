@@ -43,17 +43,126 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
   }, [mobileOpen]);
 
+  const [desktopSidebarHidden, setDesktopSidebarHidden] = useState(false);
+
+  // Restore sidebar preference from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("dreamx_sidebar_hidden");
+      if (saved !== null) {
+        setDesktopSidebarHidden(saved === "true");
+      }
+    } catch {
+      // localStorage may be disabled
+    }
+  }, []);
+
+  const toggleDesktopSidebar = () => {
+    setDesktopSidebarHidden((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("dreamx_sidebar_hidden", String(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  // Global keyboard shortcut (Cmd+B or Ctrl+B) to toggle sidebar anywhere
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        toggleDesktopSidebar();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   // Close the mobile drawer automatically whenever navigation happens.
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
 
   return (
-    <div className="soft-sage-shell flex min-h-screen">
+    <div className="soft-sage-shell relative flex min-h-screen">
       <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-white focus:p-3">{t("nav.skipContent")}</a>
-      <aside className="sage-sidebar hidden w-64 flex-shrink-0 border-e md:block">
-        <div className="sticky top-0 h-screen"><SidebarNav /></div>
+
+      {/* Desktop Sidebar with GPU-accelerated spring slide and width morph */}
+      <aside
+        className={`sage-sidebar hidden flex-shrink-0 border-e transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:block overflow-hidden ${
+          desktopSidebarHidden
+            ? "w-0 border-transparent opacity-0 pointer-events-none"
+            : "w-64 border-ink-100 opacity-100"
+        }`}
+        aria-hidden={desktopSidebarHidden}
+      >
+        <div
+          className={`sticky top-0 h-screen w-64 transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            desktopSidebarHidden
+              ? "-translate-x-full rtl:translate-x-full"
+              : "translate-x-0"
+          }`}
+        >
+          <SidebarNav
+            onToggleCollapse={toggleDesktopSidebar}
+            isCollapsed={desktopSidebarHidden}
+          />
+        </div>
       </aside>
+
+      {/* World-Tier Floating Edge Handle on the Sidebar Boundary */}
+      <div
+        className="fixed top-24 z-40 hidden md:block transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
+        style={{
+          insetInlineStart: desktopSidebarHidden ? "0px" : "15.75rem",
+        }}
+      >
+        <button
+          type="button"
+          onClick={toggleDesktopSidebar}
+          className={`group relative flex h-11 w-6 items-center justify-center border border-ink-200/90 bg-stone-50/95 text-ink-600 shadow-md backdrop-blur-sm transition-all duration-200 hover:w-7 hover:border-moss-500 hover:bg-white hover:text-moss-700 active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-moss-500 ${
+            desktopSidebarHidden
+              ? "rounded-e-xl border-s-0 shadow-lg"
+              : "rounded-full shadow-sm"
+          }`}
+          title={desktopSidebarHidden ? `${t("nav.expandSidebar")} (⌘B)` : `${t("nav.collapseSidebar")} (⌘B)`}
+          aria-label={desktopSidebarHidden ? t("nav.expandSidebar") : t("nav.collapseSidebar")}
+        >
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={`transition-transform duration-300 ${
+              desktopSidebarHidden
+                ? "rotate-0 rtl:rotate-180 group-hover:scale-110"
+                : "rotate-180 rtl:rotate-0 group-hover:scale-110"
+            }`}
+          >
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+
+          {/* Floating Tooltip Pill */}
+          <span className="pointer-events-none absolute -bottom-8 start-0 z-50 whitespace-nowrap rounded-md bg-ink-900 px-2 py-0.5 text-[10px] font-medium text-stone-100 opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100">
+            {desktopSidebarHidden ? t("nav.expandSidebar") : t("nav.collapseSidebar")}{" "}
+            <kbd className="font-mono text-[9px] text-ink-300">⌘B</kbd>
+          </span>
+        </button>
+      </div>
 
       {/* Mobile drawer */}
       {mobileOpen && (
@@ -70,7 +179,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col" ref={contentRef}>
+      <div className="flex min-w-0 flex-1 flex-col transition-all duration-300" ref={contentRef}>
         <SiteHeader onMenuClick={() => setMobileOpen(true)} />
         <main id="main-content" tabIndex={-1} className={`min-h-[calc(100vh-64px)] flex-1 ${/^\/properties\/[^/]+\/?$/.test(pathname) ? "editorial-page-background" : ["/", "/apartments", "/builds", "/lands"].includes(pathname) ? "courtyard-page-background" : ""}`}>{children}</main>
       </div>

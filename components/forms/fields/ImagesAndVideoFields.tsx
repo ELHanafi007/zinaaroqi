@@ -41,25 +41,42 @@ export function ImagesAndVideoFields({
   const [localPreview, setLocalPreview] = useState<string | null>(null);
   useEffect(() => () => { if (localPreview) URL.revokeObjectURL(localPreview); }, [localPreview]);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ completed: 0, total: 0 });
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+    const files = Array.from(e.target.files ?? []);
     e.target.value = ""; // allow selecting the same file again later
-    if (!file) return;
+    if (!files.length) return;
 
-    setLocalPreview(URL.createObjectURL(file));
+    setLocalPreview(URL.createObjectURL(files[0]));
     setUploadError(null);
     setUploading(true);
-    try {
-      const result = await uploadImage(file);
-      addUploadedImage(result.data.url);
-    } catch (err) {
-      setUploadError(err instanceof ApiClientError ? err.message : t("form.uploadError"));
-    } finally {
-      setUploading(false);
-      setLocalPreview(null);
+    setUploadProgress({ completed: 0, total: files.length });
+
+    const queue = [...files];
+    const uploaded: string[] = [];
+    const failures: string[] = [];
+    async function worker() {
+      while (queue.length) {
+        const file = queue.shift();
+        if (!file) return;
+        try {
+          const optimized = await optimizeImage(file);
+          const result = await uploadImage(optimized);
+          uploaded.push(result.data.url);
+        } catch (err) {
+          failures.push(err instanceof ApiClientError ? err.message : t("form.uploadError"));
+        } finally {
+          setUploadProgress((prev) => ({ ...prev, completed: prev.completed + 1 }));
+        }
+      }
     }
+    await Promise.all([worker(), worker(), worker()]);
+    uploaded.forEach(addUploadedImage);
+    if (failures.length) setUploadError(failures[0]);
+    setUploading(false);
+    setLocalPreview(null);
   }
 
   return (
@@ -108,6 +125,7 @@ export function ImagesAndVideoFields({
             ref={fileInputRef}
             type="file"
             accept="image/jpeg,image/png,image/webp,image/gif"
+            multiple
             onChange={handleFileSelected}
             className="hidden"
           />
@@ -117,7 +135,7 @@ export function ImagesAndVideoFields({
             disabled={uploading}
             className="btn-secondary whitespace-nowrap"
           >
-            {uploading ? t("form.uploading") : t("form.uploadFromDevice")}
+            {uploading ? `${t("form.uploading")} ${uploadProgress.completed}/${uploadProgress.total}` : t("form.uploadFromDevice")}
           </button>
           <span className="text-xs text-ink-400">{t("form.orPasteUrl")}</span>
         </div>
@@ -177,6 +195,20 @@ export function ImagesAndVideoFields({
       </section>
     </>
   );
+}
+
+async function optimizeImage(file: File): Promise<File> {
+  if (file.type === "image/gif" || file.size < 700_000) return file;
+  const bitmap = await createImageBitmap(file);
+  const maxSide = 2400;
+  const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.82));
+  return blob ? new File([blob], file.name.replace(/\.[^.]+$/, ".webp"), { type: "image/webp" }) : file;
 }
 
 function ImagePreview({ url, label, errorLabel }: { url: string; label: string; errorLabel: string }) {

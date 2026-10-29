@@ -1,13 +1,13 @@
 import type { PropertyDTO } from "@/types/property";
 import { propertyLocationUrl } from "./property-share";
 import { formatPriceWithPeriod } from "./format";
-import { translations } from "./i18n/translations";
+import { translations, type Locale } from "./i18n/translations";
 
 /** Both preview and server sending use this exact message. Stored text stays in its original language. */
-export function propertyTextMessage(property: PropertyDTO, origin: string, locale: "en" | "ar") {
+export function propertyTextMessage(property: PropertyDTO, origin: string, locale: Locale) {
   const words = translations[locale];
   const labels: Record<string, string> = {
-    "common.sar": words.common.sar, "property.priceOnRequest": words.property.priceOnRequest,
+    "common.currency": words.common.currency, "property.priceOnRequest": words.property.priceOnRequest,
     "form.monthly": words.form.monthly, "form.yearly": words.form.yearly,
   };
   const price = formatPriceWithPeriod(property.price, property.listingType, property.rentalPeriod, (key) => labels[key] || key, locale);
@@ -21,7 +21,7 @@ export function propertyTextMessage(property: PropertyDTO, origin: string, local
   ].filter(Boolean);
   const units = property.category === "build" && property.units.length ? ["", `*${words.property.unitsSection}*`, ...property.units.map((unit, index) => `${unit.name || unit.number || `${words.property.unit} ${index + 1}`} • ${unit.isRented ? words.badges.status.rented : words.badges.status.available}${unit.rooms != null ? ` • ${words.property.rooms}: ${unit.rooms}` : ""}${unit.bathrooms != null ? ` • ${words.property.bathrooms}: ${unit.bathrooms}` : ""}`)] : [];
   const address = [property.location?.address, property.location?.district, property.location?.city].filter(Boolean).join(", ");
-  return ["*41 للعقارات | 41 Real Estate*", "", `*${property.title}*`,
+  return ["*زين الرقي للعقارات | Zin Aroqi Immobilier*", "", `*${property.title}*`,
     `${(property.propertyType ? words.offer.types[property.propertyType] : words.badges.category[property.category])} • ${words.badges.listingType[property.listingType]} • ${words.badges.status[property.status]}`,
     `💰 ${words.property.price}: ${price}`, ...(details ? [details] : []), ...features, ...units, ...(address ? [`📍 ${address}`] : []),
     ...(property.description.trim() ? ["", `*${words.property.description}*`, property.description.trim()] : []),

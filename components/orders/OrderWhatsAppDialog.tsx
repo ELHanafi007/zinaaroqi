@@ -14,7 +14,7 @@ export function OrderWhatsAppDialog({ order, onClose }: { order: OrderDTO; onClo
   const [loadError, setLoadError] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [groupId, setGroupId] = useState("");
-  const [language, setLanguage] = useState<"ar" | "en">(locale);
+  const [language, setLanguage] = useState<"ar" | "en">(locale === "ar" ? "ar" : "en");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
   const [locked, setLocked] = useState(false);

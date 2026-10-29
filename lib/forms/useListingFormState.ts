@@ -18,6 +18,7 @@ import { type UnitFormState } from "@/components/forms/BuildUnitsForm";
 export interface ListingFormState {
   title: string;
   propertyType: NonNullable<PropertyDTO["propertyType"]>;
+  legalStatus: PropertyDTO["legalStatus"] | "";
   broughtByUserId: string;
   listingType: ListingType;
   price: string;
@@ -36,9 +37,12 @@ export interface ListingFormState {
   ownerNotes: string;
   city: string;
   district: string;
+  bloc: string;
+  number: string;
   address: string;
   images: string[];
   tiktokUrl: string;
+  area: string;
   rooms: string;
   bathrooms: string;
   hasKitchen: boolean;
@@ -55,6 +59,7 @@ function initialState(category: Category, property?: PropertyDTO): ListingFormSt
     return {
       title: "",
       propertyType: "apartment",
+      legalStatus: "",
       broughtByUserId: "",
       listingType: "sale",
       price: "",
@@ -73,9 +78,12 @@ function initialState(category: Category, property?: PropertyDTO): ListingFormSt
       ownerNotes: "",
       city: "",
       district: "",
+      bloc: "",
+      number: "",
       address: "",
       images: [],
       tiktokUrl: "",
+      area: "",
       rooms: "",
       bathrooms: "",
       hasKitchen: false,
@@ -90,6 +98,7 @@ function initialState(category: Category, property?: PropertyDTO): ListingFormSt
   return {
     title: property.title,
     propertyType: property.propertyType ?? "apartment",
+    legalStatus: property.legalStatus ?? "",
     broughtByUserId: property.broughtBy?.userId ?? "",
     listingType: property.listingType,
     price: property.price != null ? String(property.price) : "",
@@ -108,9 +117,12 @@ function initialState(category: Category, property?: PropertyDTO): ListingFormSt
     ownerNotes: property.owner?.notes ?? "",
     city: property.location?.city ?? "",
     district: property.location?.district ?? "",
+    bloc: property.location?.bloc ?? "",
+    number: property.location?.number ?? "",
     address: property.location?.address ?? "",
     images: property.images,
     tiktokUrl: property.tiktokUrl ?? "",
+    area: property.details?.area != null ? String(property.details.area) : "",
     rooms: property.details?.rooms != null ? String(property.details.rooms) : "",
     bathrooms: property.details?.bathrooms != null ? String(property.details.bathrooms) : "",
     hasKitchen: property.details?.hasKitchen ?? false,
@@ -209,7 +221,7 @@ export function useListingFormState(category: Category, property?: PropertyDTO) 
   }
 
   const payload = useMemo(() => {
-    const hasLocationInfo = Boolean(form.city.trim() || form.district.trim() || form.address.trim() || form.mapUrl.trim());
+    const hasLocationInfo = Boolean(form.city.trim() || form.district.trim() || form.bloc.trim() || form.number.trim() || form.address.trim() || form.mapUrl.trim());
     const isRent = form.listingType === "rent";
     const hasTenantInfo = Boolean(
       form.tenantName.trim() || form.tenantIdNumber.trim() || form.tenantPhone.trim()
@@ -219,6 +231,7 @@ export function useListingFormState(category: Category, property?: PropertyDTO) 
       title: form.title,
       category,
       propertyType: category === "apartment" ? form.propertyType : undefined,
+      legalStatus: form.legalStatus || undefined,
       broughtByUserId: form.broughtByUserId || undefined,
       listingType: isLand ? "sale" : form.listingType,
       description: form.description,
@@ -239,12 +252,17 @@ export function useListingFormState(category: Category, property?: PropertyDTO) 
             city: form.city.trim() || undefined,
             mapUrl: form.mapUrl.trim() || undefined,
             district: form.district || undefined,
+            bloc: form.bloc.trim() || undefined,
+            number: form.number.trim() || undefined,
             address: form.address || undefined,
           }
         : undefined,
-      details: isLand || !form.hasDetails
+      details: isLand
+        ? (form.area !== "" ? { area: Number(form.area) } : undefined)
+        : !form.hasDetails
         ? undefined
         : {
+            area: form.area !== "" ? Number(form.area) : undefined,
             rooms: form.rooms !== "" ? Number(form.rooms) : undefined,
             bathrooms: form.bathrooms !== "" ? Number(form.bathrooms) : undefined,
             hasKitchen: form.hasKitchen,

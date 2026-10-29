@@ -12,6 +12,14 @@ import { translations, type Locale } from "./translations";
 
 const STORAGE_KEY = "maskan-locale";
 
+/** Languages offered by the language switcher, in display order. */
+export const SUPPORTED_LOCALES: Locale[] = ["en", "ar", "fr"];
+
+/** Arabic is the only right-to-left language we ship. */
+export function localeDirection(locale: Locale): "ltr" | "rtl" {
+  return locale === "ar" ? "rtl" : "ltr";
+}
+
 interface LanguageContextValue {
   locale: Locale;
   dir: "ltr" | "rtl";
@@ -36,14 +44,14 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored === "ar" || stored === "en") {
-      setLocaleState(stored);
+    if (stored && SUPPORTED_LOCALES.includes(stored as Locale)) {
+      setLocaleState(stored as Locale);
     }
   }, []);
 
   useEffect(() => {
     document.documentElement.lang = locale;
-    document.documentElement.dir = locale === "ar" ? "rtl" : "ltr";
+    document.documentElement.dir = localeDirection(locale);
   }, [locale]);
 
   const setLocale = useCallback((next: Locale) => {
@@ -76,7 +84,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ locale, dir: (locale === "ar" ? "rtl" : "ltr") as "ltr" | "rtl", setLocale, t }),
+    () => ({ locale, dir: localeDirection(locale), setLocale, t }),
     [locale, setLocale, t]
   );
 

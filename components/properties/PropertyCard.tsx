@@ -69,11 +69,12 @@ export function PropertyCard({ property }: { property: PropertyDTO }) {
         </p>
         <h3 className="haven-card-title">{property.title}</h3>
         <p className="line-clamp-2 text-xs leading-relaxed text-ink-500">{property.description}</p>
-        {property.category !== "land" && property.details && (property.details.rooms != null || property.details.bathrooms != null || property.details.acInstalled) && (
+        {property.details && (property.details.area != null || property.details.rooms != null || property.details.bathrooms != null || property.details.acInstalled) && (
           <div className="flex flex-wrap gap-2 py-1 text-xs font-medium text-ink-600">
-            {property.details.rooms != null && <span className="inline-flex items-center gap-1.5 rounded-lg bg-stone-50 px-2.5 py-1.5"><Icon name="bed" className="h-4 w-4" />{property.details.rooms} {t("property.rooms")}</span>}
-            {property.details.bathrooms != null && <span className="inline-flex items-center gap-1.5 rounded-lg bg-stone-50 px-2.5 py-1.5"><Icon name="bath" className="h-4 w-4" />{property.details.bathrooms} {t("property.bathrooms")}</span>}
-            {property.details.acInstalled && <span className="inline-flex items-center gap-1.5 rounded-lg bg-moss-50 px-2.5 py-1.5 text-moss-600"><Icon name="snow" className="h-4 w-4" />{t("form.acInstalled")}</span>}
+            {property.details.area != null && <span className="inline-flex items-center gap-1.5 rounded-lg bg-brass-50 px-2.5 py-1.5 font-semibold text-brass-700"><span>📐</span>{property.details.area} m²</span>}
+            {property.category !== "land" && property.details.rooms != null && <span className="inline-flex items-center gap-1.5 rounded-lg bg-stone-50 px-2.5 py-1.5"><Icon name="bed" className="h-4 w-4" />{property.details.rooms} {t("property.rooms")}</span>}
+            {property.category !== "land" && property.details.bathrooms != null && <span className="inline-flex items-center gap-1.5 rounded-lg bg-stone-50 px-2.5 py-1.5"><Icon name="bath" className="h-4 w-4" />{property.details.bathrooms} {t("property.bathrooms")}</span>}
+            {property.category !== "land" && property.details.acInstalled && <span className="inline-flex items-center gap-1.5 rounded-lg bg-moss-50 px-2.5 py-1.5 text-moss-600"><Icon name="snow" className="h-4 w-4" />{t("form.acInstalled")}</span>}
           </div>
         )}
         {session?.user && residencyTypes.length > 0 && (

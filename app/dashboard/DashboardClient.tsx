@@ -17,6 +17,7 @@ const DEFAULT_FILTERS: FilterState = {
   search: "",
   category: "",
   listingType: "",
+  legalStatus: "",
   status: "",
   residencyType: "",
   sortBy: "createdAt",

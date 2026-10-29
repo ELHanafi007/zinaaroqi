@@ -111,7 +111,7 @@ export function PriceField({ form, update, errors, t }: Props & { errors: Record
       />
       {form.hasPrice && <div>
         <label className="label-field" htmlFor="price">{t("form.price")}</label>
-        <PriceInput value={form.price} onChange={(value) => update("price", value)} currency={t("common.sar")} />
+        <PriceInput value={form.price} onChange={(value) => update("price", value)} currency={t("common.currency")} />
         {errors.price && <p className="field-error">{errors.price}</p>}
       </div>}
     </div>

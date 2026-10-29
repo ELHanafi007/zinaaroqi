@@ -52,6 +52,7 @@ export function PropertyQuickView({ property: initialProperty, onClose }: { prop
         <PriceDisplay price={property.price} listingType={property.listingType} rentalPeriod={property.rentalPeriod} />
         <p className="my-4 flex items-center gap-2 text-sm text-ink-500"><Icon name="location" className="h-4 w-4" />{formatLocation(property.location, t)}</p>
         <div className="mb-5 flex flex-wrap gap-3 text-sm text-ink-600">
+          {property.details?.area != null && <span className="font-semibold text-brass-700">📐 {property.details.area} m²</span>}
           {property.category !== "land" && property.details?.rooms != null && <span>{property.details.rooms} {t("property.rooms")}</span>}
           {property.category !== "land" && property.details?.bathrooms != null && <span>{property.details.bathrooms} {t("property.bathrooms")}</span>}
           {property.category === "build" && property.units.length > 0 && <span>{property.units.length} {t("property.unitsSection")}</span>}

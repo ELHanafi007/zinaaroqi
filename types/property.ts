@@ -11,6 +11,7 @@ export type Visibility = "public" | "private";
  * classification in Gulf-region residential real estate. Left undefined
  * means no restriction. */
 export type ResidencyType = "family" | "singles" | "women_only";
+export type LegalStatus = "mohafada" | "non_mohafada";
 
 export interface Owner {
   name: string;
@@ -24,9 +25,12 @@ export interface Location {
   city?: string;
   mapUrl?: string;
   district?: string;
+  bloc?: string;
+  number?: string;
 }
 
 export interface PropertyDetails {
+  area?: number; // Surface area in square meters (m²)
   rooms?: number;
   bathrooms?: number;
   hasKitchen?: boolean;
@@ -59,6 +63,7 @@ export interface PropertyDTO {
   title: string;
   category: Category;
   propertyType?: "villa" | "apartment" | "duplex" | "floor" | "shop" | "other";
+  legalStatus?: LegalStatus;
   broughtBy?: { userId: string; name: string };
 
   listingType: ListingType;

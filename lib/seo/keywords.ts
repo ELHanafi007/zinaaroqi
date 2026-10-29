@@ -4,9 +4,9 @@ export const realEstateKeywords = [
   "عقار", "عقارات", "عقارات السعودية", "عقارات المملكة العربية السعودية",
   "المملكة العربية السعودية", "المملكه العربيه السعوديه", "السعودية",
   "للبيع", "للإيجار", "للايجار", "بيع عقار", "إيجار عقار", "شراء عقار",
-  "مكتب عقاري", "عروض عقارية", "استثمار عقاري", "41 للعقارات",
-  "real estate", "Saudi real estate", "Saudi Arabia properties", "Kingdom of Saudi Arabia",
-  "property for sale", "property for rent", "buy property", "rent property", "real estate office", "property listings", "41 Real Estate",
+  "مكتب عقاري", "عروض عقارية", "استثمار عقاري", "زين الرقي للعقارات", "زين الرقي",
+  "real estate", "Morocco real estate", "Saudi real estate", "Zin Aroqi", "Zin Aroqi Immobilier", "immeuble",
+  "property for sale", "property for rent", "buy property", "rent property", "real estate office", "property listings", "Zin Aroqi Real Estate",
 ];
 const categoryKeywords: Record<Category, string[]> = {
   apartment: ["شقق", "شقة", "شقق للبيع", "شقق للإيجار", "شقق للايجار", "فلل", "فيلا", "فلل للبيع", "فلل للإيجار", "دوبلكس", "أدوار", "محلات", "apartments", "flats", "villas", "duplex", "shops", "apartments for sale", "apartments for rent"],

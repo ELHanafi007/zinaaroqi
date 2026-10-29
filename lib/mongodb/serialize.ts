@@ -8,6 +8,7 @@ export function serializeProperty(doc: PropertyHydrated): PropertyDTO {
     title: obj.title,
     category: obj.category,
     propertyType: obj.propertyType,
+    legalStatus: obj.legalStatus,
     broughtBy: obj.broughtBy?.userId ? { userId: obj.broughtBy.userId, name: obj.broughtBy.name } : undefined,
     listingType: obj.listingType,
     description: obj.description,
@@ -29,6 +30,8 @@ export function serializeProperty(doc: PropertyHydrated): PropertyDTO {
           city: obj.location.city,
           mapUrl: obj.location.mapUrl,
           district: obj.location.district,
+          bloc: obj.location.bloc,
+          number: obj.location.number,
         }
       : undefined,
     details: obj.details

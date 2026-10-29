@@ -13,12 +13,16 @@ const locationSchema = z.object({
   city: z.string().trim().max(120).optional(),
   mapUrl: z.string().trim().max(4096).refine(isGoogleMapsUrl, "Enter a Google Maps location URL.").optional(),
   district: z.string().trim().max(120).optional().or(z.literal("")),
+  bloc: z.string().trim().max(60).optional().or(z.literal("")),
+  number: z.string().trim().max(60).optional().or(z.literal("")),
 });
 
 const roomCount = z.coerce.number().int().min(0).max(200).optional();
 const residencyTypeSchema = z.enum(["family", "singles", "women_only"]).optional();
 
+const areaCount = z.coerce.number().min(0).max(1000000).optional();
 const detailsSchema = z.object({
+  area: areaCount,
   rooms: roomCount,
   bathrooms: roomCount,
   hasKitchen: z.boolean().optional(),
@@ -53,6 +57,7 @@ export const propertyInputSchema = z
       message: "Choose a valid category.",
     }),
     propertyType: z.enum(["villa", "apartment", "duplex", "floor", "shop", "other"]).optional(),
+    legalStatus: z.enum(["mohafada", "non_mohafada"]).optional(),
     broughtByUserId: z.string().regex(/^[a-fA-F0-9]{24}$/, "Choose a valid system user.").optional(),
     listingType: z.enum(["sale", "rent"], {
       message: "Choose sale or rent.",
