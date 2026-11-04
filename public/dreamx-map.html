@@ -1027,8 +1027,29 @@
       specs.innerHTML = specsList.join(" ");
 
       // WhatsApp Button
-      let placeDetail = `${p.neighborhoodName || 'Laâyoune'}${p.bloc ? ', Bloc ' + p.bloc : ''}${p.number ? ', N° ' + p.number : ''}`;
-      const waMsg = `Bonjour DreamX, je suis intéressé par votre annonce "${p.title}" (${formatMAD(p.priceAmount)} à ${placeDetail}). Est-elle toujours disponible?`;
+      let placeDetail = [
+        p.neighborhoodName || 'العيون',
+        p.bloc ? `بلوك ${p.bloc}` : '',
+        p.number ? `رقم ${p.number}` : ''
+      ].filter(Boolean).join("، ");
+
+      const waMsgLines = [
+        "السلام عليكم ورحمة الله، أنا مهتم بهذا العقار وأود الاستفسار عنه:",
+        "",
+        `🏡 *${p.title}*`,
+        p.transactionType ? `📋 نوع المعاملة: ${p.transactionType === 'sale' ? 'للبيع' : 'للكراء'}` : '',
+        p.priceAmount != null ? `💰 السعر: ${formatMAD(p.priceAmount)}` : '',
+        placeDetail ? `📍 الموقع: ${placeDetail}` : '',
+        p.area ? `📐 المساحة: ${p.area} م²` : '',
+        p.rooms != null ? `🚪 الغرف: ${p.rooms}` : '',
+        p.legalStatus ? `📜 الحالة القانونية: ${p.legalStatus === 'mohafada_titre' ? 'محفظ' : 'غير محفظ'}` : '',
+        "",
+        `🔗 رابط العقار: ${window.location.origin}/properties/${p.id}`,
+        "",
+        "هل العقار ما زال متاحاً؟ وهل يمكن ترتيب موعد للمعاينة؟ شكراً لكم."
+      ].filter(Boolean);
+
+      const waMsg = waMsgLines.join("\n");
       document.getElementById("card-btn-wa").href = `https://wa.me/${OFFICE_WHATSAPP}?text=${encodeURIComponent(waMsg)}`;
 
       // Edit / Details Link

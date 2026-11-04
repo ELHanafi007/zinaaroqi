@@ -1,6 +1,6 @@
 "use client";
 
-import { propertyLocationUrl, propertyShareMessage } from "@/lib/property-share";
+import { propertyLocationUrl, propertyShareMessage, propertyInquiryMessage } from "@/lib/property-share";
 import { publicSiteOrigin } from "@/lib/site-url";
 import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -106,6 +106,7 @@ export default function PropertyDetailsClient({ publicOrigin, initialProperty }:
   const propertyUrl = shareOrigin ? `${shareOrigin}/properties/${property._id}` : "";
   const locationUrl = propertyLocationUrl(property);
   const shareMessage = propertyShareMessage(property.title, propertyUrl, locationUrl, t("form.locationSection"));
+  const inquiryMessage = propertyInquiryMessage(property, propertyUrl, locale);
   const details = property.details;
   const hasAnyDetail =
     details &&
@@ -255,7 +256,7 @@ export default function PropertyDetailsClient({ publicOrigin, initialProperty }:
                           <Icon name="phone" className="h-4 w-4" />
                           {locale === "ar" ? "اتصل بنا" : "Call us"}
                         </a>
-                        <a href={officeWhatsAppLink(OFFICE_PHONE_NUMBERS[0], shareMessage)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#218c4b] px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-[#176b3a]">
+                        <a href={officeWhatsAppLink(OFFICE_PHONE_NUMBERS[0], inquiryMessage)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#218c4b] px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-[#176b3a]">
                           <Icon name="whatsapp" className="h-4 w-4" />
                           {locale === "ar" ? "تواصل عبر واتساب" : "WhatsApp us"}
                         </a>
@@ -278,7 +279,7 @@ export default function PropertyDetailsClient({ publicOrigin, initialProperty }:
                       </span>
                       <div className="flex gap-2">
                         <a
-                          href={officeWhatsAppLink(number, shareMessage)}
+                          href={officeWhatsAppLink(number, inquiryMessage)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="btn-secondary px-3 py-1.5 text-xs"
