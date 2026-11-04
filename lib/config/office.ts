@@ -5,7 +5,7 @@
  * Configured for Morocco (+212) DreamX Real Estate office.
  */
 export const OFFICE_PHONE_NUMBERS: string[] = [
-  process.env.NEXT_PUBLIC_OFFICE_PHONE || "+212 631-305954",
+  process.env.NEXT_PUBLIC_OFFICE_PHONE || "+212 349-81286",
 ];
 
 export function toInternational(localNumber: string): string {
