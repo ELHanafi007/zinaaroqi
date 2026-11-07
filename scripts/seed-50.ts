@@ -171,6 +171,10 @@ async function seed50() {
   await mongoose.connect(MONGODB_URI!);
   console.log("Connected successfully.");
 
+  console.log("Removing existing properties before the replacement seed...");
+  const deleted = await Property.deleteMany({});
+  console.log(`Removed ${deleted.deletedCount} existing properties.`);
+
   const newProperties = [];
 
   for (let i = 1; i <= 50; i++) {
@@ -283,3 +287,4 @@ seed50().catch((err) => {
   console.error("Seeding failed:", err);
   process.exit(1);
 });
+
