@@ -345,171 +345,263 @@
       background: #94a3b8;
     }
 
-    /* Floating Google Maps Style Property Card */
+    /* ── Floating Property Card ── */
     .floating-card-container {
       position: absolute;
       bottom: 24px;
       right: 20px;
       left: auto;
       z-index: 950;
-      max-width: 420px;
+      max-width: 400px;
       width: calc(100% - 40px);
       pointer-events: none;
       opacity: 0;
-      transform: translateY(16px);
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: translateY(24px) scale(0.96);
+      filter: blur(4px);
+      transition:
+        opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+        filter 0.3s ease;
     }
     .floating-card-container.is-visible {
       pointer-events: auto;
       opacity: 1;
-      transform: translateY(0);
+      transform: translateY(0) scale(1);
+      filter: blur(0);
+    }
+    .floating-card-container.is-leaving {
+      opacity: 0;
+      transform: translateY(12px) scale(0.97);
+      filter: blur(2px);
+      pointer-events: none;
+      transition:
+        opacity 0.2s ease,
+        transform 0.22s ease,
+        filter 0.18s ease;
     }
 
     .place-card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      box-shadow: var(--shadow-lg);
+      border-radius: 18px;
+      box-shadow:
+        0 16px 48px -8px rgba(22, 35, 58, 0.14),
+        0 6px 16px -4px rgba(22, 35, 58, 0.06),
+        0 0 0 1px rgba(22, 35, 58, 0.03);
       overflow: hidden;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       position: relative;
+      cursor: pointer;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    .place-card:hover {
+      box-shadow:
+        0 20px 56px -8px rgba(22, 35, 58, 0.18),
+        0 8px 20px -4px rgba(22, 35, 58, 0.08),
+        0 0 0 1px rgba(30, 61, 47, 0.12);
+      transform: translateY(-2px);
     }
 
     .place-card-close {
       position: absolute;
-      top: 10px;
-      left: 10px;
+      top: 8px;
+      left: 8px;
       right: auto;
       z-index: 10;
-      width: 28px;
-      height: 28px;
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.9);
-      border: 1px solid rgba(0, 0, 0, 0.08);
-      backdrop-filter: blur(4px);
+      background: rgba(22, 35, 58, 0.55);
+      backdrop-filter: blur(8px);
+      border: none;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 700;
-      color: var(--text-main);
+      color: #ffffff;
       cursor: pointer;
-      box-shadow: var(--shadow-sm);
       transition: all 0.15s ease;
+      line-height: 1;
     }
     .place-card-close:hover {
-      background: #ffffff;
-      transform: scale(1.08);
+      background: rgba(22, 35, 58, 0.8);
+      transform: scale(1.1);
     }
 
+    /* ── Image column ── */
+    .place-card-image-wrap {
+      position: relative;
+      width: 140px;
+      min-height: 100%;
+      flex-shrink: 0;
+      overflow: hidden;
+      background: var(--surface-subtle);
+    }
     .place-card-image {
       width: 100%;
-      height: 160px;
+      height: 100%;
       object-fit: cover;
-      background: var(--surface-subtle);
-      border-bottom: 1px solid var(--border);
+      display: block;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
-
-    .place-card-body {
-      padding: 14px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      direction: rtl;
-      text-align: right;
+    .place-card:hover .place-card-image {
+      transform: scale(1.05);
     }
-
-    .place-card-price-row {
+    .place-card-image-placeholder {
+      width: 100%;
+      height: 100%;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 8px;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--surface-subtle) 0%, #ece9e0 100%);
+      color: var(--text-light);
+    }
+    .place-card-image-placeholder svg {
+      width: 32px;
+      height: 32px;
+      opacity: 0.5;
+    }
+
+    /* ── Badge overlay on image ── */
+    .place-badge-overlay {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      padding: 3px 8px;
+      border-radius: 6px;
+      backdrop-filter: blur(8px);
+      z-index: 5;
+    }
+    .place-badge-overlay.sale {
+      background: rgba(30, 61, 47, 0.85);
+      color: #ffffff;
+    }
+    .place-badge-overlay.rent {
+      background: rgba(179, 136, 68, 0.88);
+      color: #ffffff;
+    }
+
+    /* ── Body column ── */
+    .place-card-body {
+      padding: 14px 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
       direction: rtl;
+      text-align: right;
+      flex: 1;
+      min-width: 0;
+      justify-content: center;
     }
 
     .place-price {
       font-family: var(--font-display);
-      font-size: 20px;
+      font-size: 19px;
       font-weight: 700;
       color: var(--emerald);
-      letter-spacing: -0.3px;
+      letter-spacing: -0.4px;
+      line-height: 1.1;
     }
-
-    .place-badge {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      padding: 3px 8px;
-      border-radius: 9999px;
-      background: var(--emerald-light);
-      color: var(--emerald);
+    .place-price-suffix {
+      font-family: var(--font-body);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-right: 2px;
     }
 
     .place-title {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: var(--text-main);
-      line-height: 1.3;
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
 
     .place-location {
       display: flex;
       align-items: center;
-      gap: 5px;
-      font-size: 12px;
+      gap: 4px;
+      font-size: 11px;
       color: var(--text-muted);
       direction: rtl;
     }
     .place-location svg {
-      width: 13px;
-      height: 13px;
-      color: var(--emerald);
+      width: 12px;
+      height: 12px;
+      color: var(--gold);
       flex-shrink: 0;
     }
 
+    /* ── Specs row ── */
     .place-specs {
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-size: 12px;
+      gap: 0;
+      font-size: 11px;
       color: var(--text-muted);
-      border-top: 1px solid var(--border);
-      padding-top: 8px;
-      margin-top: 2px;
       direction: rtl;
+      margin-top: 2px;
+    }
+    .spec-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: var(--surface-subtle);
+      font-weight: 600;
+      font-size: 10.5px;
+      color: var(--text-main);
+      white-space: nowrap;
+    }
+    .spec-chip + .spec-chip {
+      margin-right: 4px;
+    }
+    .spec-chip svg {
+      width: 11px;
+      height: 11px;
+      color: var(--text-light);
     }
 
+    /* ── Action buttons ── */
     .place-actions {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-top: 6px;
+      gap: 6px;
+      margin-top: 4px;
       direction: rtl;
     }
 
     .btn-wa {
-      flex: 1;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      width: 34px;
+      height: 34px;
+      flex-shrink: 0;
       background: var(--whatsapp);
       color: #ffffff;
-      font-size: 12px;
-      font-weight: 600;
-      padding: 8px 12px;
       border-radius: 10px;
       transition: all 0.15s ease;
-      box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);
+      box-shadow: 0 2px 8px rgba(37, 211, 102, 0.25);
     }
     .btn-wa:hover {
       background: var(--whatsapp-hover);
       transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(37, 211, 102, 0.35);
     }
     .btn-wa svg {
-      width: 15px;
-      height: 15px;
+      width: 16px;
+      height: 16px;
     }
 
     .btn-details {
@@ -517,20 +609,25 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 4px;
-      background: var(--surface-subtle);
-      border: 1px solid var(--border);
-      color: var(--text-main);
+      gap: 5px;
+      background: var(--emerald);
+      border: none;
+      color: #ffffff;
       font-size: 12px;
       font-weight: 600;
-      padding: 8px 12px;
+      padding: 8px 14px;
       border-radius: 10px;
-      transition: all 0.15s ease;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 2px 6px rgba(30, 61, 47, 0.2);
     }
     .btn-details:hover {
-      background: #ffffff;
-      border-color: var(--border-dark);
-      color: var(--emerald);
+      background: #28523f;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(30, 61, 47, 0.3);
+    }
+    .btn-details svg {
+      width: 14px;
+      height: 14px;
     }
 
     /* Custom Cluster styling to match main site */
@@ -559,8 +656,10 @@
       .top-actions { width: auto; }
       .btn-expand { width: 38px; height: 36px; padding: 0; justify-content: center; }
       .btn-expand span { display: none; }
-      .floating-card-container { right: 10px; width: calc(100% - 20px); bottom: 12px; }
-      .place-card-image { height: 120px; }
+      .floating-card-container { right: 10px; left: 10px; width: auto; bottom: 12px; max-width: none; }
+      .place-card { flex-direction: column; }
+      .place-card-image-wrap { width: 100%; min-height: 0; height: 130px; }
+      .place-card-body { padding: 12px 14px 10px; }
     }
   </style>
 </head>
@@ -599,7 +698,10 @@
         <select id="select-property-type" class="filter-select">
           <option value="all">كل الأنواع</option>
           <option value="apartment">شقق</option>
-          <option value="build">مبانٍ وفلل</option>
+          <option value="villa">فلل مستقلة</option>
+          <option value="duplex">دوبلكس</option>
+          <option value="build">مبانٍ وعمائر</option>
+          <option value="floor">طوابق سكنية</option>
           <option value="land">أراضٍ</option>
           <option value="shop">محلات تجارية</option>
         </select>
@@ -611,9 +713,9 @@
 
         <!-- Legal status filter -->
         <select id="select-legal-status" class="filter-select">
-          <option value="all">محفظة وغير محفظة</option>
-          <option value="mohafada">محفظة</option>
-          <option value="non_mohafada">غير محفظة</option>
+          <option value="all">كل الحالات القانونية</option>
+          <option value="mohafada">محفظ (تيتر)</option>
+          <option value="non_mohafada">غير محفظ</option>
         </select>
 
         <!-- Rooms Filter -->
@@ -624,6 +726,14 @@
           <option value="3">3 غرف فأكثر</option>
           <option value="4">4 غرف فأكثر</option>
           <option value="5">5 غرف فأكثر</option>
+        </select>
+
+        <!-- Bathrooms Filter -->
+        <select id="select-bathrooms" class="filter-select">
+          <option value="all">كل الحمامات</option>
+          <option value="1">حمام فأكثر</option>
+          <option value="2">حمامان فأكثر</option>
+          <option value="3">3 حمامات فأكثر</option>
         </select>
 
         <!-- Surface / Area (Metrage) Filter -->
@@ -637,13 +747,27 @@
         </select>
 
         <!-- Price Filter -->
-          <select id="select-price" class="filter-select">
+        <select id="select-price" class="filter-select">
           <option value="all">كل الأسعار</option>
+          <option value="5000">حتى 5,000 درهم (إيجار)</option>
+          <option value="10000">حتى 10,000 درهم (إيجار)</option>
           <option value="500000">حتى 500,000 درهم</option>
           <option value="1000000">حتى 1,000,000 درهم</option>
           <option value="2000000">حتى 2,000,000 درهم</option>
           <option value="5000000">حتى 5,000,000 درهم</option>
-          </select>
+        </select>
+
+        <!-- Kitchen Installed Filter -->
+        <select id="select-kitchen" class="filter-select">
+          <option value="all">المطبخ (الكل)</option>
+          <option value="true">مطبخ مجهز</option>
+        </select>
+
+        <!-- AC Installed Filter -->
+        <select id="select-ac" class="filter-select">
+          <option value="all">التكييف (الكل)</option>
+          <option value="true">مكيف هوائي</option>
+        </select>
 
           <!-- Reset All Filters -->
           <button type="button" id="btn-reset-filters" class="filter-select" style="background:#f1ede4;font-weight:600;border:none;">
@@ -691,17 +815,28 @@
         </button>
       </div>
 
-      <!-- Floating Google Maps Style Property Card (Bottom Left) -->
+      <!-- Floating Property Card -->
       <div class="floating-card-container" id="floating-card-container">
         <div class="place-card" id="place-card">
           <button class="place-card-close" id="btn-card-close" aria-label="Close card">✕</button>
           
-          <img id="card-img" class="place-card-image" src="" alt="Property" style="display:none;">
+          <!-- Image Column -->
+          <div class="place-card-image-wrap" id="card-image-wrap">
+            <img id="card-img" class="place-card-image" src="" alt="Property">
+            <div id="card-img-placeholder" class="place-card-image-placeholder" style="display:none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+            </div>
+            <span class="place-badge-overlay" id="card-badge">للبيع</span>
+          </div>
 
+          <!-- Info Column -->
           <div class="place-card-body">
-            <div class="place-card-price-row">
+            <div>
               <span class="place-price" id="card-price">0 MAD</span>
-              <span class="place-badge" id="card-badge">Available</span>
+              <span class="place-price-suffix" id="card-price-suffix"></span>
             </div>
 
             <h3 class="place-title" id="card-title">Property Title</h3>
@@ -714,23 +849,22 @@
               <span id="card-location">Laâyoune</span>
             </div>
 
-            <div class="place-specs" id="card-specs">
-              <!-- Specs details -->
-            </div>
+            <div class="place-specs" id="card-specs"></div>
 
             <div class="place-actions">
-              <!-- WhatsApp Contact (+21234981286) -->
+              <!-- WhatsApp -->
               <a href="#" id="card-btn-wa" class="btn-wa" target="_blank" rel="noopener noreferrer">
                 <svg viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2z"/>
                 </svg>
-                <span>تواصل عبر واتساب</span>
               </a>
 
-              <!-- Details / Edit Link -->
+              <!-- Details Button — links to PUBLIC property page -->
               <a href="#" id="card-btn-details" class="btn-details" target="_top">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M15 3h6v6"/><path d="M10 14L21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                </svg>
                 <span>عرض التفاصيل</span>
-                <span>↗</span>
               </a>
             </div>
           </div>
@@ -766,8 +900,11 @@
       legalStatus: "all",
       maxPrice: "all",
       rooms: "all",
+      bathrooms: "all",
       area: "all",
-      status: "all"
+      status: "all",
+      hasKitchen: "all",
+      acInstalled: "all"
     };
 
     function formatMAD(amount) {
@@ -875,10 +1012,13 @@
           transaction: filters.transaction,
           propertyType: filters.propertyType,
           neighborhood: filters.neighborhood,
-          legalStatus: isLegalStatusRelevant() ? filters.legalStatus : "all",
+          legalStatus: filters.legalStatus,
           status: filters.status,
           maxPrice: filters.maxPrice === "all" ? "" : filters.maxPrice,
           rooms: filters.rooms === "all" ? "" : filters.rooms,
+          bathrooms: filters.bathrooms === "all" ? "" : filters.bathrooms,
+          hasKitchen: filters.hasKitchen === "true" ? "true" : "",
+          acInstalled: filters.acInstalled === "true" ? "true" : "",
           minArea,
           maxArea,
           search: filters.search
@@ -990,43 +1130,75 @@
 
     function openCard(p) {
       const container = document.getElementById("floating-card-container");
-      
+
+      // If already visible, animate out first, then animate back in with new data
+      if (container.classList.contains("is-visible")) {
+        container.classList.add("is-leaving");
+        container.classList.remove("is-visible");
+        setTimeout(() => {
+          fillCard(p);
+          container.classList.remove("is-leaving");
+          container.classList.add("is-visible");
+        }, 200);
+      } else {
+        fillCard(p);
+        // Force reflow so animation triggers fresh
+        container.offsetHeight;
+        container.classList.add("is-visible");
+      }
+    }
+
+    function fillCard(p) {
+      // Price
       document.getElementById("card-price").textContent = formatMAD(p.priceAmount);
+      const suffix = document.getElementById("card-price-suffix");
+      suffix.textContent = p.transactionType === "rent" ? "/ شهرياً" : "";
+
+      // Title
       document.getElementById("card-title").textContent = p.title;
       
+      // Location
       let locDetails = `${p.neighborhoodName || p.district || 'Laâyoune'}`;
       if (p.bloc) locDetails += ` · Bloc: ${p.bloc}`;
       if (p.number) locDetails += ` · N°: ${p.number}`;
       document.getElementById("card-location").textContent = locDetails;
       
+      // Badge
       const badge = document.getElementById("card-badge");
-      badge.textContent = p.transactionType === "sale" ? "للبيع" : "للإيجار";
+      const isSale = p.transactionType === "sale";
+      badge.textContent = isSale ? "للبيع" : "للإيجار";
+      badge.className = `place-badge-overlay ${isSale ? "sale" : "rent"}`;
 
+      // Image
       const img = document.getElementById("card-img");
+      const placeholder = document.getElementById("card-img-placeholder");
       if (p.primaryImageUrl) {
         img.src = p.primaryImageUrl;
         img.style.display = "block";
+        placeholder.style.display = "none";
       } else {
         img.style.display = "none";
+        placeholder.style.display = "flex";
       }
 
-      // Specs with Metrage (Area in m²)
+      // Specs chips
       const specs = document.getElementById("card-specs");
-      const specsList = [
-        `<span><strong>${p.category || 'عقار'}</strong></span>`
-      ];
+      const chips = [];
       if (p.area != null) {
-        specsList.push(`<span>•</span><span style="color:var(--gold);font-weight:700;">📐 ${p.area} م²</span>`);
+        chips.push(`<span class="spec-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>${p.area} م²</span>`);
       }
       if (p.rooms != null) {
-        specsList.push(`<span>•</span><span>${p.rooms} غرف</span>`);
+        chips.push(`<span class="spec-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>${p.rooms} غرف</span>`);
+      }
+      if (p.category) {
+        chips.push(`<span class="spec-chip">${p.category}</span>`);
       }
       if (p.legalStatus) {
-        specsList.push(`<span>•</span><span>${p.legalStatus === 'mohafada_titre' ? 'محفظ' : 'قياسي'}</span>`);
+        chips.push(`<span class="spec-chip">${p.legalStatus === 'mohafada_titre' ? 'محفظ' : 'قياسي'}</span>`);
       }
-      specs.innerHTML = specsList.join(" ");
+      specs.innerHTML = chips.join("");
 
-      // WhatsApp Button
+      // WhatsApp
       let placeDetail = [
         p.neighborhoodName || 'العيون',
         p.bloc ? `بلوك ${p.bloc}` : '',
@@ -1052,14 +1224,17 @@
       const waMsg = waMsgLines.join("\n");
       document.getElementById("card-btn-wa").href = `https://wa.me/${OFFICE_WHATSAPP}?text=${encodeURIComponent(waMsg)}`;
 
-      // Edit / Details Link
-      document.getElementById("card-btn-details").href = `/dashboard/${p.id}/edit`;
-
-      container.classList.add("is-visible");
+      // Details Link → PUBLIC property page (not dashboard/edit)
+      document.getElementById("card-btn-details").href = `/properties/${p.id}`;
     }
 
     function closeCard() {
-      document.getElementById("floating-card-container").classList.remove("is-visible");
+      const container = document.getElementById("floating-card-container");
+      container.classList.add("is-leaving");
+      container.classList.remove("is-visible");
+      setTimeout(() => {
+        container.classList.remove("is-leaving");
+      }, 220);
       currentSelectedId = null;
       markersMap.forEach(entry => {
         if (entry.element) entry.element.classList.remove("selected");
@@ -1159,6 +1334,11 @@
         loadData();
       });
 
+      document.getElementById("select-bathrooms").addEventListener("change", (e) => {
+        filters.bathrooms = e.target.value;
+        loadData();
+      });
+
       document.getElementById("select-area").addEventListener("change", (e) => {
         filters.area = e.target.value;
         loadData();
@@ -1166,6 +1346,16 @@
 
       document.getElementById("select-price").addEventListener("change", (e) => {
         filters.maxPrice = e.target.value;
+        loadData();
+      });
+
+      document.getElementById("select-kitchen").addEventListener("change", (e) => {
+        filters.hasKitchen = e.target.value;
+        loadData();
+      });
+
+      document.getElementById("select-ac").addEventListener("change", (e) => {
+        filters.acInstalled = e.target.value;
         loadData();
       });
 
@@ -1178,16 +1368,21 @@
         filters.legalStatus = "all";
         filters.maxPrice = "all";
         filters.rooms = "all";
+        filters.bathrooms = "all";
         filters.area = "all";
+        filters.hasKitchen = "all";
+        filters.acInstalled = "all";
         document.getElementById("input-search").value = "";
         document.getElementById("select-transaction").value = "all";
         document.getElementById("select-property-type").value = "all";
         document.getElementById("select-neighborhood").value = "all";
         document.getElementById("select-legal-status").value = "all";
-        updateLegalStatusControl();
         document.getElementById("select-rooms").value = "all";
+        document.getElementById("select-bathrooms").value = "all";
         document.getElementById("select-area").value = "all";
         document.getElementById("select-price").value = "all";
+        document.getElementById("select-kitchen").value = "all";
+        document.getElementById("select-ac").value = "all";
         loadData();
       });
 
