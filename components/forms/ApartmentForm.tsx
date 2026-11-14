@@ -1,6 +1,5 @@
 "use client";
 
-import { OfferFields } from "@/components/forms/fields/OfferFields";
 import { EditorialListingForm } from "@/components/forms/EditorialListingForm";
 import type { PropertyDTO } from "@/types/property";
 import { useListingFormState } from "@/lib/forms/useListingFormState";
@@ -51,8 +50,6 @@ export function ApartmentForm({ property }: { property?: PropertyDTO }) {
           />
           {errors.title && <p className="field-error">{errors.title}</p>}
         </div>
-
-        <OfferFields form={form} update={update} errors={errors} existingUser={property?.broughtBy} />
 
         <ListingTypeField form={form} update={update} t={t} />
 

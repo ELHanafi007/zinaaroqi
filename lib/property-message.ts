@@ -24,7 +24,7 @@ export function propertyTextMessage(property: PropertyDTO, origin: string, local
   return ["*زين الرقي للعقارات | Zin Aroqi Immobilier*", "", `*${property.title}*`,
     `${(property.propertyType ? words.offer.types[property.propertyType] : words.badges.category[property.category])} • ${words.badges.listingType[property.listingType]} • ${words.badges.status[property.status]}`,
     `💰 ${words.property.price}: ${price}`, ...(details ? [details] : []), ...features, ...units, ...(address ? [`📍 ${address}`] : []),
-    ...(property.description.trim() ? ["", `*${words.property.description}*`, property.description.trim()] : []),
+    ...((property.description || "").trim() ? ["", `*${words.property.description}*`, (property.description || "").trim()] : []),
     "", `🔗 ${locale === "ar" ? "عرض العقار" : "View property"}:`, `${origin}/properties/${property._id}`,
     ...(location ? ["", `📍 ${words.property.openLocation}:`, location] : []),
     ...(property.tiktokUrl ? ["", `🎬 ${words.property.watchOnTikTok}:`, property.tiktokUrl] : []),

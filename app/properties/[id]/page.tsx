@@ -71,7 +71,7 @@ export async function generateMetadata({
     if (!property || property.visibility === "private") return FALLBACK_METADATA;
 
     const description =
-      (property.description.trim() || `${property.title} — property details, price and location.`).replace(/\s+/g, " ").slice(0, 160);
+      ((property.description || "").trim() || `${property.title} — property details, price and location.`).replace(/\s+/g, " ").slice(0, 160);
     const image = property.images[0];
 
     return {

@@ -10,7 +10,6 @@ import { Icon } from "@/components/ui/Icon";
 import { PriceDisplay } from "@/components/properties/PriceDisplay";
 import { WhatsAppSendForm } from "@/components/properties/WhatsAppSendForm";
 import { PropertyQuickEdit, type QuickEditField } from "@/components/properties/PropertyQuickEdit";
-import { TikTokVideo } from "@/components/properties/TikTokVideo";
 import { LocationMap } from "@/components/properties/LocationMap";
 import { CategoryBadge } from "@/components/properties/CategoryBadge";
 import { ListingTypeBadge } from "@/components/properties/ListingTypeBadge";
@@ -325,8 +324,12 @@ export default function PropertyDetailsClient({ publicOrigin, initialProperty }:
 
       <div className="editorial-lower">
         <div className="editorial-story">
-          <div className="flex items-center justify-between gap-3"><h2 className="font-display text-xl font-semibold text-ink-800">{t("property.description")}</h2><CopyButton label={t("property.copyDescription")} text={property.description} /></div>
-          <p className="mt-3 whitespace-pre-line text-ink-600">{property.description}</p>
+          {property.description && (
+            <>
+              <div className="flex items-center justify-between gap-3"><h2 className="font-display text-xl font-semibold text-ink-800">{t("property.description")}</h2><CopyButton label={t("property.copyDescription")} text={property.description} /></div>
+              <p className="mt-3 whitespace-pre-line text-ink-600">{property.description}</p>
+            </>
+          )}
 
           <h2 className="mt-8 font-display text-xl font-semibold text-ink-800">{t("property.details")}</h2>
           <dl className="mt-3 grid grid-cols-2 gap-4 rounded-lg border border-ink-100 bg-white p-5 shadow-card sm:grid-cols-3">
@@ -379,7 +382,6 @@ export default function PropertyDetailsClient({ publicOrigin, initialProperty }:
           {session?.user && <section className="property-office-record mt-8 rounded-xl border border-ink-100 bg-white p-5">
             <h2 className="flex items-center gap-2 text-lg font-semibold text-ink-800"><Icon name="users" className="h-5 w-5" />{t("property.officeRecord")}</h2>
             <dl className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <div><dt className="text-xs uppercase tracking-wide text-ink-400">{t("offer.broughtBy")}</dt><dd className="mt-1 font-medium text-ink-800">{property.broughtBy?.name || t("property.notRecorded")}</dd></div>
               <div><dt className="text-xs uppercase tracking-wide text-ink-400">{t("form.visibility")}</dt><dd className="mt-1 font-medium text-ink-800">{t(property.visibility === "public" ? "form.visibilityPublic" : "form.visibilityPrivate")}</dd></div>
             </dl>
           </section>}
@@ -534,7 +536,6 @@ export default function PropertyDetailsClient({ publicOrigin, initialProperty }:
           {(locationUrl || canQuickEdit) && <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><h2 className="editorial-section-title"><Icon name="location" className="h-5 w-5" />{t("form.locationSection")}</h2><div className="flex items-center gap-2">{canQuickEdit && <button type="button" onClick={() => setQuickEditField("mapUrl")} className="inline-edit-trigger rounded-lg border border-ink-100 px-3 py-2 text-sm"><Icon name="edit" className="h-4 w-4" />{locationUrl ? editLabel("mapUrl") : locale === "ar" ? "إضافة الموقع" : "Add location"}</button>}{locationUrl && <CopyButton label={t("property.copyLocation")} text={locationUrl} />}</div></div>}
           {locationUrl ? <LocationMap url={locationUrl} /> : canQuickEdit && <button type="button" onClick={() => setQuickEditField("mapUrl")} className="flex min-h-40 w-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-ink-200 bg-stone-50 p-6 text-sm text-ink-500 hover:bg-stone-100 focus-visible:outline focus-visible:outline-2"><Icon name="location" className="h-7 w-7" />{locale === "ar" ? "لم يُضف موقع بعد. اضغط لإضافة رابط خرائط Google." : "No location added yet. Click to add a Google Maps link."}</button>}
           {canQuickEdit && <button type="button" onClick={() => setQuickEditField("tiktokUrl")} className="inline-edit-trigger mt-5 rounded-xl border border-ink-100 px-4 py-3 text-sm"><Icon name="tiktok" className="h-4 w-4" />{property.tiktokUrl ? editLabel("tiktokUrl") : locale === "ar" ? "إضافة رابط TikTok" : "Add TikTok link"}<Icon name="edit" className="h-3 w-3" /></button>}
-          {property.tiktokUrl && <div className="mt-5"><TikTokVideo url={property.tiktokUrl} /></div>}
           {property.tiktokUrl && <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ink-100 bg-white p-4">
             <a href={property.tiktokUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-medium text-ink-600 hover:underline"><Icon name="tiktok" className="h-5 w-5" />{t("property.watchOnTikTok")}</a>
             <CopyButton label={t("property.copyTikTok")} text={property.tiktokUrl} />

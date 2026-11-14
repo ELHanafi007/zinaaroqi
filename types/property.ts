@@ -67,7 +67,7 @@ export interface PropertyDTO {
   broughtBy?: { userId: string; name: string };
 
   listingType: ListingType;
-  description: string;
+  description?: string;
   price?: number;
   rentalPeriod?: RentalPeriod;
   status: ListingStatus;

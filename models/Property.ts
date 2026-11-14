@@ -38,7 +38,7 @@ export interface PropertyDocument {
   broughtBy?: { userId: string; name: string };
 
   listingType: ListingType;
-  description: string;
+  description?: string;
   price?: number;
   rentalPeriod?: RentalPeriod;
   status: ListingStatus;
@@ -142,7 +142,7 @@ const PropertySchema = new Schema<PropertyDocument>(
       required: true,
       enum: ["sale", "rent"],
     },
-    description: { type: String, required: true, trim: true, maxlength: 5000 },
+    description: { type: String, trim: true, maxlength: 5000, default: "" },
     price: { type: Number, min: 0 },
     rentalPeriod: {
       type: String,

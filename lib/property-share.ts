@@ -5,7 +5,7 @@ import { isGoogleMapsUrl } from "./maps";
 export function propertyLocationUrl(property: Pick<PropertyDTO, "location" | "description">): string | null {
   const saved = property.location?.mapUrl?.trim();
   if (saved && isGoogleMapsUrl(saved)) return saved;
-  const links = property.description.match(/https:\/\/[^\s<>"']+/g) ?? [];
+  const links = property.description?.match(/https:\/\/[^\s<>"']+/g) ?? [];
   for (const link of links) {
     const cleaned = link.replace(/[)\]،.,;]+$/, "");
     if (isGoogleMapsUrl(cleaned)) return cleaned;

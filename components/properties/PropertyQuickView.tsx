@@ -57,8 +57,12 @@ export function PropertyQuickView({ property: initialProperty, onClose }: { prop
           {property.category !== "land" && property.details?.bathrooms != null && <span>{property.details.bathrooms} {t("property.bathrooms")}</span>}
           {property.category === "build" && property.units.length > 0 && <span>{property.units.length} {t("property.unitsSection")}</span>}
         </div>
-        <div className="flex items-center justify-between gap-2"><h3 className="text-sm font-semibold">{t("property.description")}</h3><CopyButton text={property.description} label={t("property.copyDescription")} /></div>
-        <p dir="auto" className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-ink-600">{property.description}</p>
+        {property.description && (
+          <>
+            <div className="flex items-center justify-between gap-2"><h3 className="text-sm font-semibold">{t("property.description")}</h3><CopyButton text={property.description} label={t("property.copyDescription")} /></div>
+            <p dir="auto" className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-ink-600">{property.description}</p>
+          </>
+        )}
         {session?.user && !property.owner && <p className="mt-5 text-sm text-ink-500">{t("property.ownerNotProvided")}</p>}
         {session?.user && property.owner && <div className="mt-5 border-t border-ink-100 pt-4"><div className="flex items-center justify-between gap-2"><h3 className="text-sm font-semibold">{t("property.ownerContact")}</h3><CopyButton text={[property.owner.name, property.owner.phone, property.owner.email, property.owner.notes].filter(Boolean).join("\n")} label={t("property.copyOwner")} /></div><p className="mt-2 whitespace-pre-line text-sm text-ink-600">{[property.owner.name, property.owner.phone, property.owner.email, property.owner.notes].filter(Boolean).join("\n")}</p></div>}
         {location && <div className="mt-4 flex items-center justify-between gap-2"><a href={location} target="_blank" rel="noopener noreferrer" className="text-sm text-moss-600 underline">{t("property.openLocation")}</a><CopyButton text={location} label={t("property.copyLocation")} /></div>}

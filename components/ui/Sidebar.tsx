@@ -103,8 +103,7 @@ export function SidebarNav({
     adminItems.push({ href: "/dashboard/orders", labelKey: "nav.orders", mark: "clipboard" });
   }
   if (role === "admin") {
-    adminItems.push({ href: "/dashboard/users", labelKey: "nav.users", mark: "users" });
-    adminItems.push({ href: "/dashboard/whatsapp", labelKey: "whatsappConnection.title", mark: "phone" });
+    // Removed users and whatsapp connection from sidebar as requested
   }
 
   return (

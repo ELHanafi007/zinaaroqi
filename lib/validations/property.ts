@@ -62,7 +62,7 @@ export const propertyInputSchema = z
     listingType: z.enum(["sale", "rent"], {
       message: "Choose sale or rent.",
     }),
-    description: z.string().trim().min(10, "Description must be at least 10 characters.").max(5000),
+    description: z.string().trim().max(5000).optional().default(""),
     price: z.coerce.number({ message: "Price must be a number." }).positive("Price must be greater than 0.").optional(),
     rentalPeriod: z.enum(["monthly", "yearly"]).optional(),
     status: z.enum(["available", "sold", "rented"]).default("available"),

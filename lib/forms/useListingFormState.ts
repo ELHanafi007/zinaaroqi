@@ -110,7 +110,7 @@ function initialState(category: Category, property?: PropertyDTO): ListingFormSt
     rentalPeriod: property.rentalPeriod ?? "",
     status: property.status,
     visibility: property.visibility,
-    description: property.description,
+    description: property.description ?? "",
     ownerName: property.owner?.name ?? "",
     ownerPhone: property.owner?.phone ?? "",
     ownerEmail: property.owner?.email ?? "",
