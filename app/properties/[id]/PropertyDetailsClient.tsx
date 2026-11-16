@@ -220,80 +220,33 @@ export default function PropertyDetailsClient({ publicOrigin, initialProperty }:
           <div className="mt-3">{canQuickEdit ? <button type="button" className="inline-edit-trigger rounded-xl p-2 -ms-2 text-start" aria-label={editLabel("price")} title={editLabel("price")} onClick={() => setQuickEditField("price")}><PriceDisplay price={property.price} listingType={property.listingType} rentalPeriod={property.rentalPeriod} large /><Icon name="edit" className="h-4 w-4" /></button> : <PriceDisplay price={property.price} listingType={property.listingType} rentalPeriod={property.rentalPeriod} large />}</div>
 
           <div className="mt-5 border-t border-ink-100 pt-5">
-            {session?.user ? (
-              <>
-                <div className="flex items-center justify-between gap-3"><p className="text-xs font-semibold uppercase tracking-wide text-ink-400">{t("property.ownerContact")}</p>{property.owner && <CopyButton label={t("property.copyOwner")} text={[property.owner.name, property.owner.phone, property.owner.email, property.owner.notes].filter(Boolean).join("\n")} />}</div>
-                {property.owner ? (
-                  <>
-                    <p className="mt-2 font-medium text-ink-800">{property.owner.name}</p>
-                    <p className="mt-1 text-sm text-ink-600">{property.owner.phone}</p>
-                    {property.owner.email && (
-                      <p className="mt-1 text-sm text-ink-600">{property.owner.email}</p>
-                    )}
-                    {property.owner.notes && (
-                      <p className="mt-2 text-sm text-ink-400">{property.owner.notes}</p>
-                    )}
-                  </>
-                ) : (
-                  <div className="mt-3 rounded-2xl border border-[#cce9d5] bg-[#f0fbf3] p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="flex items-center gap-2 text-sm font-semibold text-[#176b3a]">
-                          <Icon name="whatsapp" className="h-5 w-5" />
-                          {locale === "ar" ? "تواصل معنا عبر واتساب" : "Contact us on WhatsApp"}
-                        </p>
-                        <p className="mt-1 text-xs leading-5 text-[#4b755b]">
-                          {locale === "ar" ? "اسأل عن هذا العقار مباشرة عبر واتساب." : "Ask about this property directly on WhatsApp."}
-                        </p>
-                      </div>
-                      <CopyButton label={locale === "ar" ? "نسخ الرقم" : "Copy number"} text={OFFICE_PHONE_NUMBERS[0]} />
-                    </div>
-                    <div className="mt-3 rounded-xl border border-[#d8efdf] bg-white px-3 py-2.5">
-                      <span className="text-sm font-semibold tracking-wide text-[#214b31]" dir="ltr">{OFFICE_PHONE_NUMBERS[0]}</span>
-                      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                        <a href={officeCallLink(OFFICE_PHONE_NUMBERS[0])} className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#cfe0d4] bg-white px-3 py-2.5 text-xs font-semibold text-[#214b31] transition hover:border-[#218c4b] hover:bg-[#f4fbf5]">
-                          <Icon name="phone" className="h-4 w-4" />
-                          {locale === "ar" ? "اتصل بنا" : "Call us"}
-                        </a>
-                        <a href={officeWhatsAppLink(OFFICE_PHONE_NUMBERS[0], inquiryMessage)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#218c4b] px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-[#176b3a]">
-                          <Icon name="whatsapp" className="h-4 w-4" />
-                          {locale === "ar" ? "تواصل عبر واتساب" : "WhatsApp us"}
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">
-                  {t("property.contactOffice")}
-                </p>
-                <p className="mt-1 text-xs text-ink-400">{t("property.contactOfficeHint")}</p>
-                <div className="mt-3 space-y-2">
-                  {OFFICE_PHONE_NUMBERS.map((number) => (
-                    <div key={number} className="flex items-center justify-between gap-2">
-                      <span className="text-sm text-ink-700" dir="ltr">
-                        {number}
-                      </span>
-                      <div className="flex gap-2">
-                        <a
-                          href={officeWhatsAppLink(number, inquiryMessage)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn-secondary px-3 py-1.5 text-xs"
-                        >
-                          <Icon name="phone" className="h-3.5 w-3.5" />{t("property.whatsapp")}
-                        </a>
-                        <a href={officeCallLink(number)} className="btn-secondary px-3 py-1.5 text-xs">
-                          <Icon name="phone" className="h-3.5 w-3.5" />{t("property.call")}
-                        </a>
-                      </div>
-                    </div>
-                  ))}
+            <div className="rounded-2xl border border-[#cce9d5] bg-[#f0fbf3] p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="flex items-center gap-2 text-sm font-semibold text-[#176b3a]">
+                    <Icon name="whatsapp" className="h-5 w-5" />
+                    {locale === "ar" ? "تواصل معنا عبر واتساب" : locale === "fr" ? "Contactez-nous sur WhatsApp" : "Contact us on WhatsApp"}
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-[#4b755b]">
+                    {locale === "ar" ? "اسأل عن هذا العقار مباشرة عبر واتساب." : locale === "fr" ? "Renseignez-vous directement sur ce bien via WhatsApp." : "Ask about this property directly on WhatsApp."}
+                  </p>
                 </div>
-              </>
-            )}
+                <CopyButton label={locale === "ar" ? "نسخ الرقم" : locale === "fr" ? "Copier le numéro" : "Copy number"} text={OFFICE_PHONE_NUMBERS[0]} />
+              </div>
+              <div className="mt-3 rounded-xl border border-[#d8efdf] bg-white px-3 py-2.5">
+                <span className="text-sm font-semibold tracking-wide text-[#214b31]" dir="ltr">{OFFICE_PHONE_NUMBERS[0]}</span>
+                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <a href={officeCallLink(OFFICE_PHONE_NUMBERS[0])} className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#cfe0d4] bg-white px-3 py-2.5 text-xs font-semibold text-[#214b31] transition hover:border-[#218c4b] hover:bg-[#f4fbf5]">
+                    <Icon name="phone" className="h-4 w-4" />
+                    {locale === "ar" ? "اتصل بنا" : locale === "fr" ? "Appelez-nous" : "Call us"}
+                  </a>
+                  <a href={officeWhatsAppLink(OFFICE_PHONE_NUMBERS[0], inquiryMessage)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#218c4b] px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-[#176b3a]">
+                    <Icon name="whatsapp" className="h-4 w-4" />
+                    {locale === "ar" ? "تواصل عبر واتساب" : locale === "fr" ? "Écrivez-nous sur WhatsApp" : "WhatsApp us"}
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
 
 

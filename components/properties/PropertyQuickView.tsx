@@ -11,7 +11,6 @@ import { StatusBadge } from "./StatusBadge";
 import { useLanguage } from "@/lib/i18n/LanguageProvider";
 import { formatLocation } from "@/lib/format";
 import { propertyLocationUrl } from "@/lib/property-share";
-import { useSession } from "next-auth/react";
 
 export function PropertyQuickView({ property: initialProperty, onClose }: { property: PropertyDTO; onClose: () => void }) {
   const { t } = useLanguage();
@@ -22,7 +21,6 @@ export function PropertyQuickView({ property: initialProperty, onClose }: { prop
     fetchProperty(initialProperty._id).then(result => { if (active) setProperty(result.data); }).catch(() => { if (active) setLoadFailed(true); });
     return () => { active = false; };
   }, [initialProperty._id]);
-  const { data: session } = useSession();
   const dialog = useRef<HTMLDialogElement>(null);
   const [image, setImage] = useState(0);
   const location = propertyLocationUrl(property);
@@ -63,8 +61,7 @@ export function PropertyQuickView({ property: initialProperty, onClose }: { prop
             <p dir="auto" className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-ink-600">{property.description}</p>
           </>
         )}
-        {session?.user && !property.owner && <p className="mt-5 text-sm text-ink-500">{t("property.ownerNotProvided")}</p>}
-        {session?.user && property.owner && <div className="mt-5 border-t border-ink-100 pt-4"><div className="flex items-center justify-between gap-2"><h3 className="text-sm font-semibold">{t("property.ownerContact")}</h3><CopyButton text={[property.owner.name, property.owner.phone, property.owner.email, property.owner.notes].filter(Boolean).join("\n")} label={t("property.copyOwner")} /></div><p className="mt-2 whitespace-pre-line text-sm text-ink-600">{[property.owner.name, property.owner.phone, property.owner.email, property.owner.notes].filter(Boolean).join("\n")}</p></div>}
+
         {location && <div className="mt-4 flex items-center justify-between gap-2"><a href={location} target="_blank" rel="noopener noreferrer" className="text-sm text-moss-600 underline">{t("property.openLocation")}</a><CopyButton text={location} label={t("property.copyLocation")} /></div>}
         {property.tiktokUrl && <div className="mt-3 flex items-center justify-between gap-2"><a href={property.tiktokUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-moss-600 underline">{t("property.watchOnTikTok")}</a><CopyButton text={property.tiktokUrl} label={t("property.copyTikTok")} /></div>}
       </div>

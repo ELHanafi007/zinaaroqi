@@ -85,7 +85,7 @@ export function PropertyCard({ property }: { property: PropertyDTO }) {
           </div>
         )}
         {property.category === "build" && property.units.length > 0 && <p className="text-xs text-ink-500">{property.units.length} {t("property.unitsSection")}</p>}
-        {session?.user && property.owner?.name && <p className="truncate text-xs text-ink-500">{property.owner.name}</p>}
+
       </div>
     </Link>
     <div className="haven-card-footer">
