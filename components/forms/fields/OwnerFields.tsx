@@ -46,27 +46,6 @@ export function OwnerFields({
           />
           {errors["owner.phone"] && <p className="field-error">{errors["owner.phone"]}</p>}
         </div>
-        <div>
-          <label className="label-field" htmlFor="ownerEmail">{t("form.ownerEmail")}</label>
-          <input
-            id="ownerEmail"
-            type="email"
-            className="input-field"
-            value={form.ownerEmail}
-            onChange={(e) => update("ownerEmail", e.target.value)}
-          />
-          {errors["owner.email"] && <p className="field-error">{errors["owner.email"]}</p>}
-        </div>
-        <div>
-          <label className="label-field" htmlFor="ownerNotes">{t("form.ownerNotes")}</label>
-          <input
-            id="ownerNotes"
-            className="input-field"
-            value={form.ownerNotes}
-            onChange={(e) => update("ownerNotes", e.target.value)}
-            placeholder={t("form.ownerNotesPlaceholder")}
-          />
-        </div>
       </div>}
     </section>
   );
