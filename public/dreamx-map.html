@@ -937,7 +937,7 @@
 
     // Initialize Map with 100% Free OpenStreetMap + ESRI Satellite (Zero API keys needed)
     let streetLayer, satelliteLayer;
-    let currentTileMode = "streets";
+    let currentTileMode = "satellite";
 
     function initMap() {
       map = L.map("map", {
@@ -961,23 +961,28 @@
         maxZoom: 18
       });
 
-      // Start with Street view
-      streetLayer.addTo(map);
+      // Start with Satellite view by default
+      satelliteLayer.addTo(map);
+      const layerBtn = document.getElementById("btn-toggle-layer");
+      if (layerBtn) {
+        layerBtn.style.background = "var(--emerald)";
+        layerBtn.style.color = "#ffffff";
+      }
 
       // Toggle Satellite / Street View
       document.getElementById("btn-toggle-layer").addEventListener("click", () => {
-        if (currentTileMode === "streets") {
-          map.removeLayer(streetLayer);
-          satelliteLayer.addTo(map);
-          currentTileMode = "satellite";
-          document.getElementById("btn-toggle-layer").style.background = "var(--emerald)";
-          document.getElementById("btn-toggle-layer").style.color = "#ffffff";
-        } else {
+        if (currentTileMode === "satellite") {
           map.removeLayer(satelliteLayer);
           streetLayer.addTo(map);
           currentTileMode = "streets";
           document.getElementById("btn-toggle-layer").style.background = "";
           document.getElementById("btn-toggle-layer").style.color = "";
+        } else {
+          map.removeLayer(streetLayer);
+          satelliteLayer.addTo(map);
+          currentTileMode = "satellite";
+          document.getElementById("btn-toggle-layer").style.background = "var(--emerald)";
+          document.getElementById("btn-toggle-layer").style.color = "#ffffff";
         }
       });
 
